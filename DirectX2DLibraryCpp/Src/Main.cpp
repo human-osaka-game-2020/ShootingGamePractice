@@ -5,6 +5,13 @@
 #include "Engine/Engine.h"
 #include "Common/Vec.h"
 
+float Playerpos_x = 20.0f;	//プレイヤーのx座標
+float Playerpos_y = 210.0f;	//プレイヤーのy座標
+
+
+void PlayerMachineMove();
+
+
 // ゲーム処理
 void GameProcessing();
 // 描画処理
@@ -25,6 +32,10 @@ int WINAPI WinMain(
 	{
 		return 0;
 	}
+
+	Engine::LoadTexture("PlayerMachine", "Res/Robot_idle1.png");
+
+
 
 	while (true)
 	{
@@ -70,6 +81,8 @@ void GameProcessing()
 	// 入力データの更新
 	Engine::Update();
 
+	PlayerMachineMove();
+
 }
 
 void DrawProcessing()
@@ -78,9 +91,51 @@ void DrawProcessing()
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 
+	Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine");
 
 
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
 	Engine::FinishDrawing();
+}
+
+//ゲーム処理関数
+
+//プレイヤーの上下左右移動
+void PlayerMachineMove()
+{
+	if (Engine::IsKeyboardKeyHeld(DIK_UP) == true)
+	{
+		Playerpos_y -= 3;
+		if (Playerpos_y <= 0.0f)
+		{
+			Playerpos_y = 0.0f;
+		}
+	}
+	if (Engine::IsKeyboardKeyHeld(DIK_DOWN) == true)
+	{
+		Playerpos_y += 4;
+
+		if (Playerpos_y >= 420.0f)
+		{
+			Playerpos_y = 420.0f;
+		}
+	}
+	if (Engine::IsKeyboardKeyHeld(DIK_RIGHT) == true)
+	{
+		Playerpos_x += 3;
+		if (Playerpos_x >= 580.0f)
+		{
+			Playerpos_x = 580.0f;
+		}
+	}
+	if (Engine::IsKeyboardKeyHeld(DIK_LEFT) == true)
+	{
+		Playerpos_x -= 5;
+		if (Playerpos_x <= 0.0f)
+		{
+			Playerpos_x = 0.0f;
+		}
+	}
+
 }
