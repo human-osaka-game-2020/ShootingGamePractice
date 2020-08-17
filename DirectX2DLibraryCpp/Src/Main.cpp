@@ -41,6 +41,13 @@ int FlameCount_Bullet = 30;	//弾を出してからどれだけ経過したか�
 int FlameCount_Enemy = 0;	//敵を出してからどれだけ経過したか保存
 int EnemyReSpownTime = 0;	//次の敵を出せるまでの時間
 
+enum phase
+{
+	title,
+	battle,
+	result
+};
+phase Phase = title;
 
 void PlayerMachineMove();
 void CanShotBulletSearch();
@@ -118,37 +125,66 @@ void GameProcessing()
 	// 入力データの更新
 	Engine::Update();
 
-	PlayerMachineMove();
-
-	if (Engine::IsKeyboardKeyPushed(DIK_SPACE) == true)
+	switch (Phase)
 	{
-		CanShotBulletSearch();
-	}
-	for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
-	{
-		if (BulletSpown[BulletNum] == true)
+	case title:
+		//初期化
+		for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
 		{
-			BulletClone[BulletNum].BulletMove();
-			BulletClone[BulletNum].BulletDisappearance(BulletNum);
+			BulletSpown[BulletNum] = false;
 		}
-	}
-	FlameCount_Bullet++;
-
-	if (FlameCount_Enemy >= EnemyReSpownTime)
-	{
-		EnemySpownControl();
-		FlameCount_Enemy = 0;
-		EnemyReSpownTime = rand() % 30 + 10;
-	}
-	for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
-	{
-		if (EnemySpown[EnemyNum] == true)
+		for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
 		{
-			EnemyClone[EnemyNum].EnemyMove();
-			EnemyClone[EnemyNum].EnemyDisappearance(EnemyNum);
+			EnemySpown[EnemyNum] = false;
 		}
+		Playerpos_x = 20.0f;
+		Playerpos_y = 210.0f;
+
+		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
+		{
+			Phase = battle;
+		}
+		break;
+	case battle:
+		PlayerMachineMove();
+
+		if (Engine::IsKeyboardKeyPushed(DIK_SPACE) == true)
+		{
+			CanShotBulletSearch();
+		}
+		for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
+		{
+			if (BulletSpown[BulletNum] == true)
+			{
+				BulletClone[BulletNum].BulletMove();
+				BulletClone[BulletNum].BulletDisappearance(BulletNum);
+			}
+		}
+		FlameCount_Bullet++;
+
+		if (FlameCount_Enemy >= EnemyReSpownTime)
+		{
+			EnemySpownControl();
+			FlameCount_Enemy = 0;
+			EnemyReSpownTime = rand() % 30 + 10;
+		}
+		for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
+		{
+			if (EnemySpown[EnemyNum] == true)
+			{
+				EnemyClone[EnemyNum].EnemyMove();
+				EnemyClone[EnemyNum].EnemyDisappearance(EnemyNum);
+			}
+		}
+		FlameCount_Enemy++;
+		break;
+	case result:
+		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
+		{
+			Phase = title;
+		}
+		break;
 	}
-	FlameCount_Enemy++;
 
 }
 
@@ -158,23 +194,37 @@ void DrawProcessing()
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 
-	Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine");
-
-	for (int bulletnum = 0; bulletnum < BulletStock; bulletnum++)
+	switch (Phase)
 	{
-		if (BulletSpown[bulletnum] == true)
+	case title:
+		Engine::DrawFont(190.0f, 100.0f, "SHOOTING-GAME", FontSize::Large, FontColor::White);
+		Engine::DrawFont(170.0f, 300.0f, "ENTERを押してSTART", FontSize::Large, FontColor::White);
+		break;
+	case battle:
+		Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine");
+
+		for (int bulletnum = 0; bulletnum < BulletStock; bulletnum++)
 		{
-			Engine::DrawTexture(BulletClone[bulletnum].Bulletpos_x, BulletClone[bulletnum].Bulletpos_y, "Bullet");
+			if (BulletSpown[bulletnum] == true)
+			{
+				Engine::DrawTexture(BulletClone[bulletnum].Bulletpos_x, BulletClone[bulletnum].Bulletpos_y, "Bullet");
+			}
 		}
+
+		for (int enemynum = 0; enemynum < EnemyStock; enemynum++)
+		{
+			if (EnemySpown[enemynum] == true)
+			{
+				Engine::DrawTexture(EnemyClone[enemynum].Enemypos_x, EnemyClone[enemynum].Enemypos_y, "Enemy", 255, 0.0f, 1.5f, 1.5f);
+			}
+		}
+		break;
+	case result:
+		Engine::DrawFont(250.0f, 200.0f, "GAMEOVER", FontSize::Large, FontColor::White);
+		Engine::DrawFont(120.0f, 300.0f, "ENTERを押してTITLEへ戻る", FontSize::Large, FontColor::White);
+		break;
 	}
 
-	for (int enemynum = 0; enemynum < EnemyStock; enemynum++)
-	{
-		if (EnemySpown[enemynum] == true)
-		{
-			Engine::DrawTexture(EnemyClone[enemynum].Enemypos_x, EnemyClone[enemynum].Enemypos_y, "Enemy", 255, 0.0f, 1.5f, 1.5f);
-		}
-	}
 
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
