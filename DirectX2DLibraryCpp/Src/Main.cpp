@@ -10,6 +10,10 @@ void GameProcessing();
 // 描画処理
 void DrawProcessing();
 
+float player_posx=320.0f;
+float player_posy=240.0f;
+void Playermove();
+
 /*
 	エントリポイント
 */
@@ -25,6 +29,8 @@ int WINAPI WinMain(
 	{
 		return 0;
 	}
+
+	Engine::LoadTexture("PlayerMachine", "Res/Robot.PNG");		
 
 	while (true)
 	{
@@ -69,7 +75,7 @@ void GameProcessing()
 {
 	// 入力データの更新
 	Engine::Update();
-
+	Playermove();
 }
 
 void DrawProcessing()
@@ -77,10 +83,32 @@ void DrawProcessing()
 	// 描画開始
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
-
+	Engine::DrawTexture(player_posx, player_posy, "PlayerMachine");
 
 
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
 	Engine::FinishDrawing();
+}
+
+//移動処理
+void Playermove()	
+{
+	if (Engine::IsKeyboardKeyHeld(DIK_UP)==true&& player_posy > 0)
+	{
+		player_posy -= 5;
+	}
+
+	if (Engine::IsKeyboardKeyHeld(DIK_DOWN)==true&&player_posy<420)
+	{
+		player_posy += 5;
+	}
+	if (Engine::IsKeyboardKeyHeld(DIK_RIGHT)==true&&player_posx<580)
+	{
+		player_posx += 5;
+	}
+	if (Engine::IsKeyboardKeyHeld(DIK_LEFT)==true&&player_posx>0)
+	{
+		player_posx -= 5;
+	}
 }
