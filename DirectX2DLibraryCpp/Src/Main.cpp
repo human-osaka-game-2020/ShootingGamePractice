@@ -8,6 +8,8 @@
 
 const int BulletStock = 5;	//弾表示数
 const int EnemyStock = 20;	//敵表示数
+const int Hp_Max = 3;		//HP最大値
+const int NoDamageTime = 120;	//無敵時間
 
 float Playerpos_x = 20.0f;	//プレイヤーのx座標
 float Playerpos_y = 210.0f;	//プレイヤーのy座標
@@ -37,9 +39,16 @@ public:
 bool EnemySpown[EnemyStock] = {};	//Enemyを表示しているかを判断
 Enemy EnemyClone[EnemyStock];		//EnemyをEnemyStock個複製
 
+bool HpCount[Hp_Max] = {};
+
 int FlameCount_Bullet = 30;	//弾を出してからどれだけ経過したか保存
 int FlameCount_Enemy = 0;	//敵を出してからどれだけ経過したか保存
 int EnemyReSpownTime = 0;	//次の敵を出せるまでの時間
+int NoDamageTimeCount = NoDamageTime;//無敵時間の残り時間
+int DestroyEnemy = 0;		//弾と接触した敵の数の保存
+char c_DestroyEnemy[4];
+bool initialize = false;	//ゲームオーバー後の初期化
+
 
 enum phase
 {
@@ -54,6 +63,7 @@ void CanShotBulletSearch();
 void EnemySpownControl();
 bool Contact_Player_Enemy(int num);
 bool Contact_Bullet_Enemy(int num);
+void HpDecrease();
 
 // ゲーム処理
 void GameProcessing();
@@ -79,6 +89,8 @@ int WINAPI WinMain(
 	Engine::LoadTexture("PlayerMachine", "Res/Robot_idle1.png");
 	Engine::LoadTexture("Enemy", "Res/EA1.png");
 	Engine::LoadTexture("Bullet", "Res/Bullet2.png");
+	Engine::LoadTexture("hart", "Res/akahart.png");
+	Engine::LoadTexture("breakhart", "Res/sirohart.png");
 
 	srand((unsigned)time(NULL));
 
@@ -129,18 +141,26 @@ void GameProcessing()
 	switch (Phase)
 	{
 	case title:
-		//初期化
-		for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
+		if (initialize == false)
 		{
-			BulletSpown[BulletNum] = false;
+			for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
+			{
+				BulletSpown[BulletNum] = false;
+			}
+			for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
+			{
+				EnemySpown[EnemyNum] = false;
+			}
+			for (int i = 0; i < Hp_Max; i++)
+			{
+				HpCount[i] = true;
+			}
+			Playerpos_x = 20.0f;
+			Playerpos_y = 210.0f;
+			NoDamageTimeCount = NoDamageTime;
+			DestroyEnemy = 0;
+			initialize = true;
 		}
-		for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
-		{
-			EnemySpown[EnemyNum] = false;
-		}
-		Playerpos_x = 20.0f;
-		Playerpos_y = 210.0f;
-
 		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
 		{
 			Phase = battle;
@@ -175,9 +195,28 @@ void GameProcessing()
 			{
 				EnemyClone[EnemyNum].EnemyMove();
 				EnemyClone[EnemyNum].EnemyDisappearance(EnemyNum);
+				if (Contact_Player_Enemy(EnemyNum) == true && NoDamageTimeCount >= NoDamageTime)
+				{
+					HpDecrease();
+					if (HpCount[0] == false)
+					{
+						Phase = result;
+						initialize = false;
+					}
+				}
 			}
 		}
+		NoDamageTimeCount++;
 		FlameCount_Enemy++;
+
+		if (DestroyEnemy <= 99)
+		{
+			sprintf_s(c_DestroyEnemy, 4, "%d", DestroyEnemy);
+		}
+		else
+		{
+			DestroyEnemy = 100;
+		}
 		break;
 	case result:
 		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
@@ -202,8 +241,10 @@ void DrawProcessing()
 		Engine::DrawFont(170.0f, 300.0f, "ENTERを押してSTART", FontSize::Large, FontColor::White);
 		break;
 	case battle:
-		Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine");
-
+		if (NoDamageTimeCount >= NoDamageTime || NoDamageTimeCount % 20 <= 10)
+		{
+			Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine");
+		}
 		for (int bulletnum = 0; bulletnum < BulletStock; bulletnum++)
 		{
 			if (BulletSpown[bulletnum] == true)
@@ -219,6 +260,34 @@ void DrawProcessing()
 				Engine::DrawTexture(EnemyClone[enemynum].Enemypos_x, EnemyClone[enemynum].Enemypos_y, "Enemy", 255, 0.0f, 1.5f, 1.5f);
 			}
 		}
+
+		Engine::DrawFont(0.0f, 0.0f, "HP：", FontSize::Large, FontColor::White);
+		for (int HpNum = 0; HpNum < Hp_Max; HpNum++)
+		{
+			switch (HpCount[HpNum])
+			{
+			case true:
+				Engine::DrawTexture(HpNum * 50 + 60, 5, "hart", 255, 0.0f, 0.5f, 0.5f);
+				break;
+			case false:
+				Engine::DrawTexture(HpNum * 50 + 60, 5, "breakhart", 255, 0.0f, 0.5f, 0.5f);
+				break;
+			}
+
+		}
+
+		if (DestroyEnemy <= 99)
+		{
+			Engine::DrawFont(560, 0.0f, c_DestroyEnemy, FontSize::Large, FontColor::White);
+		}
+		else
+		{
+			Engine::DrawFont(560, 0.0f, "99+", FontSize::Large, FontColor::White);
+
+		}
+		Engine::DrawFont(530, 0.0f, "×", FontSize::Large, FontColor::White);
+		Engine::DrawTexture(480, 10.0f, "Enemy");
+
 		break;
 	case result:
 		Engine::DrawFont(250.0f, 200.0f, "GAMEOVER", FontSize::Large, FontColor::White);
@@ -329,9 +398,13 @@ void Enemy::EnemyMove()
 void Enemy::EnemyDisappearance(int num)
 {
 	if (EnemyClone[num].Enemypos_x <= -20.0f ||
-		Contact_Player_Enemy(num) == true ||
-		Contact_Bullet_Enemy(num) == true)
+		Contact_Player_Enemy(num) == true)
 	{
+		EnemySpown[num] = false;
+	}
+	else if (Contact_Bullet_Enemy(num) == true)
+	{
+		DestroyEnemy++;
 		EnemySpown[num] = false;
 	}
 }
@@ -382,4 +455,18 @@ bool Contact_Bullet_Enemy(int num)
 		}
 	}
 	return false;
+}
+
+//HPの減少
+void HpDecrease()
+{
+	for (int i = Hp_Max - 1; i >= 0; i--)
+	{
+		if (HpCount[i] == true)
+		{
+			HpCount[i] = false;
+			NoDamageTimeCount = 0;
+			break;
+		}
+	}
 }
