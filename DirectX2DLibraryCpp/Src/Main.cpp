@@ -41,6 +41,11 @@ Enemy EnemyClone[EnemyStock];		//EnemyをEnemyStock個複製
 
 bool HpCount[Hp_Max] = {};
 
+float BackGround_cloud_1 = 0.0f;	//背景のx座標
+float BackGround_cloud_2 = 1536.0f;	//背景のx座標
+float BackGround_grass_1 = 0.0f;	//背景のx座標
+float BackGround_grass_2 = 1024.0f;	//背景のx座標
+
 int FlameCount_Bullet = 30;	//弾を出してからどれだけ経過したか保存
 int FlameCount_Enemy = 0;	//敵を出してからどれだけ経過したか保存
 int EnemyReSpownTime = 0;	//次の敵を出せるまでの時間
@@ -64,6 +69,7 @@ void EnemySpownControl();
 bool Contact_Player_Enemy(int num);
 bool Contact_Bullet_Enemy(int num);
 void HpDecrease();
+void BackGroundMove();
 
 // ゲーム処理
 void GameProcessing();
@@ -91,6 +97,9 @@ int WINAPI WinMain(
 	Engine::LoadTexture("Bullet", "Res/Bullet2.png");
 	Engine::LoadTexture("hart", "Res/akahart.png");
 	Engine::LoadTexture("breakhart", "Res/sirohart.png");
+	Engine::LoadTexture("sky", "Res/sky1.png");
+	Engine::LoadTexture("cloud", "Res/sky2.PNG");
+	Engine::LoadTexture("grass", "Res/grass2.png");
 
 	srand((unsigned)time(NULL));
 
@@ -169,6 +178,8 @@ void GameProcessing()
 	case battle:
 		PlayerMachineMove();
 
+		BackGroundMove();
+
 		if (Engine::IsKeyboardKeyPushed(DIK_SPACE) == true)
 		{
 			CanShotBulletSearch();
@@ -234,11 +245,19 @@ void DrawProcessing()
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 
+	Engine::DrawTexture(0.0f, 0.0f, "sky", 255, 0.0f, 1.5f, 1.5f);
+
+	Engine::DrawTexture(BackGround_cloud_1, 0.0f, "cloud", 255, 0.0f, 1.5f, 1.5f);
+	Engine::DrawTexture(BackGround_cloud_2, 0.0f, "cloud", 255, 0.0f, 1.5f, 1.5f);
+
+	Engine::DrawTexture(BackGround_grass_1, 400.0f, "grass");
+	Engine::DrawTexture(BackGround_grass_2, 400.0f, "grass");
+
 	switch (Phase)
 	{
 	case title:
-		Engine::DrawFont(190.0f, 100.0f, "SHOOTING-GAME", FontSize::Large, FontColor::White);
-		Engine::DrawFont(170.0f, 300.0f, "ENTERを押してSTART", FontSize::Large, FontColor::White);
+		Engine::DrawFont(190.0f, 100.0f, "SHOOTING-GAME", FontSize::Large, FontColor::Black);
+		Engine::DrawFont(170.0f, 300.0f, "ENTERを押してSTART", FontSize::Large, FontColor::Black);
 		break;
 	case battle:
 		if (NoDamageTimeCount >= NoDamageTime || NoDamageTimeCount % 20 <= 10)
@@ -278,20 +297,37 @@ void DrawProcessing()
 
 		if (DestroyEnemy <= 99)
 		{
-			Engine::DrawFont(560, 0.0f, c_DestroyEnemy, FontSize::Large, FontColor::White);
+			Engine::DrawFont(560, 0.0f, c_DestroyEnemy, FontSize::Large, FontColor::Black);
 		}
 		else
 		{
-			Engine::DrawFont(560, 0.0f, "99+", FontSize::Large, FontColor::White);
+			Engine::DrawFont(560, 0.0f, "99+", FontSize::Large, FontColor::Black);
 
 		}
-		Engine::DrawFont(530, 0.0f, "×", FontSize::Large, FontColor::White);
+		Engine::DrawFont(530, 0.0f, "×", FontSize::Large, FontColor::Black);
 		Engine::DrawTexture(480, 10.0f, "Enemy");
 
 		break;
 	case result:
-		Engine::DrawFont(250.0f, 200.0f, "GAMEOVER", FontSize::Large, FontColor::White);
-		Engine::DrawFont(120.0f, 300.0f, "ENTERを押してTITLEへ戻る", FontSize::Large, FontColor::White);
+		Engine::DrawFont(0.0f, 0.0f, "HP：", FontSize::Large, FontColor::White);
+		for (int HpNum = 0; HpNum < Hp_Max; HpNum++)
+		{
+			switch (HpCount[HpNum])
+			{
+			case true:
+				Engine::DrawTexture(HpNum * 50 + 60, 5, "hart", 255, 0.0f, 0.5f, 0.5f);
+				break;
+			case false:
+				Engine::DrawTexture(HpNum * 50 + 60, 5, "breakhart", 255, 0.0f, 0.5f, 0.5f);
+				break;
+			}
+
+		}
+
+		Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine");
+
+		Engine::DrawFont(250.0f, 200.0f, "GAMEOVER", FontSize::Large, FontColor::Black);
+		Engine::DrawFont(120.0f, 300.0f, "ENTERを押してTITLEへ戻る", FontSize::Large, FontColor::Black);
 		break;
 	}
 
@@ -469,4 +505,31 @@ void HpDecrease()
 			break;
 		}
 	}
+}
+
+
+void BackGroundMove()
+{
+	BackGround_cloud_1 -= 1.0f;
+	if (BackGround_cloud_1 <= -1536.0f)
+	{
+		BackGround_cloud_1 = 1536.0f;
+	}
+	BackGround_cloud_2 -= 1.0f;
+	if (BackGround_cloud_2 <= -1536.0f)
+	{
+		BackGround_cloud_2 = 1536.0f;
+	}
+
+	BackGround_grass_1 -= 2.0f;
+	if (BackGround_grass_1 <= -1024.0f)
+	{
+		BackGround_grass_1 = 1024.0f;
+	}
+	BackGround_grass_2 -= 2.0f;
+	if (BackGround_grass_2 <= -1024.0f)
+	{
+		BackGround_grass_2 = 1024.0f;
+	}
+
 }
