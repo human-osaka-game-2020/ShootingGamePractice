@@ -52,7 +52,8 @@ phase Phase = title;
 void PlayerMachineMove();
 void CanShotBulletSearch();
 void EnemySpownControl();
-
+bool Contact_Player_Enemy(int num);
+bool Contact_Bullet_Enemy(int num);
 
 // ゲーム処理
 void GameProcessing();
@@ -327,8 +328,58 @@ void Enemy::EnemyMove()
 //敵の消滅
 void Enemy::EnemyDisappearance(int num)
 {
-	if (EnemyClone[num].Enemypos_x <= -20.0f)
+	if (EnemyClone[num].Enemypos_x <= -20.0f ||
+		Contact_Player_Enemy(num) == true ||
+		Contact_Bullet_Enemy(num) == true)
 	{
 		EnemySpown[num] = false;
 	}
+}
+
+//プレイヤーと敵の接触チェック
+//接触時trueを返す
+bool  Contact_Player_Enemy(int num)
+{
+	if (
+		((Playerpos_x +  4.0f >= EnemyClone[num].Enemypos_x &&
+		  Playerpos_x +  4.0f <= EnemyClone[num].Enemypos_x + 91.5f) ||
+		 (Playerpos_x + 59.0f >= EnemyClone[num].Enemypos_x &&
+		  Playerpos_x + 59.0f <= EnemyClone[num].Enemypos_x + 91.5f))
+		&&
+		((Playerpos_y + 14.0f <= EnemyClone[num].Enemypos_y &&
+		  Playerpos_y + 50.0f >= EnemyClone[num].Enemypos_y ) ||
+		 (Playerpos_y + 14.0f <= EnemyClone[num].Enemypos_y + 21.0f &&
+		  Playerpos_y + 50.0f >= EnemyClone[num].Enemypos_y + 21.0f))
+		)
+	{
+		return true;
+	}
+	return false;
+}
+
+//敵と弾の接触チェック
+//接触時trueを返し、弾を消滅させる
+bool Contact_Bullet_Enemy(int num)
+{
+	for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
+	{
+		if (
+			BulletSpown[BulletNum] == true
+			&&
+			((BulletClone[BulletNum].Bulletpos_x + 9.0f >= EnemyClone[num].Enemypos_x &&
+			  BulletClone[BulletNum].Bulletpos_x + 9.0f <= EnemyClone[num].Enemypos_x + 90.5f) ||
+			 (BulletClone[BulletNum].Bulletpos_x        >= EnemyClone[num].Enemypos_x &&
+			  BulletClone[BulletNum].Bulletpos_x        <= EnemyClone[num].Enemypos_x + 90.5))
+			&&
+			((BulletClone[BulletNum].Bulletpos_y + 9.0f >= EnemyClone[num].Enemypos_y &&
+			  BulletClone[BulletNum].Bulletpos_y + 9.0f <= EnemyClone[num].Enemypos_y + 21.0f) ||
+			 (BulletClone[BulletNum].Bulletpos_y        >= EnemyClone[num].Enemypos_y &&
+			  BulletClone[BulletNum].Bulletpos_y        <= EnemyClone[num].Enemypos_y + 21.0f))
+			)
+		{
+			BulletSpown[BulletNum] = false;
+			return true;
+		}
+	}
+	return false;
 }
