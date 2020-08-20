@@ -5,6 +5,8 @@
 #include "Engine/Engine.h"
 #include "Common/Vec.h"
 #include <time.h>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 const int BulletStock = 5;	//弾表示数
 const int EnemyStock = 20;	//敵表示数
@@ -32,12 +34,14 @@ class Enemy
 public:
 	float Enemypos_x = 800.0f;	//敵のx座標
 	float Enemypos_y = 0.0f;	//敵のy座標
+	float Theta = 0;
 
-	void EnemyMove();
+	void EnemyMove(int num);
 	void EnemyDisappearance(int num);
 };
 bool EnemySpown[EnemyStock] = {};	//Enemyを表示しているかを判断
 Enemy EnemyClone[EnemyStock];		//EnemyをEnemyStock個複製
+float ThetaSpeed = 4.0f;			//Enemyの回転速度
 
 bool HpCount[Hp_Max] = {};
 
@@ -100,6 +104,7 @@ int WINAPI WinMain(
 	Engine::LoadTexture("sky", "Res/sky1.png");
 	Engine::LoadTexture("cloud", "Res/sky2.PNG");
 	Engine::LoadTexture("grass", "Res/grass2.png");
+	Engine::LoadTexture("UI", "Res/white.png");
 
 	srand((unsigned)time(NULL));
 
@@ -146,7 +151,6 @@ void GameProcessing()
 {
 	// 入力データの更新
 	Engine::Update();
-
 	switch (Phase)
 	{
 	case title:
@@ -198,13 +202,13 @@ void GameProcessing()
 		{
 			EnemySpownControl();
 			FlameCount_Enemy = 0;
-			EnemyReSpownTime = rand() % 30 + 10;
+			EnemyReSpownTime = rand() % 50 + 50;
 		}
 		for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
 		{
 			if (EnemySpown[EnemyNum] == true)
 			{
-				EnemyClone[EnemyNum].EnemyMove();
+				EnemyClone[EnemyNum].EnemyMove(EnemyNum);
 				EnemyClone[EnemyNum].EnemyDisappearance(EnemyNum);
 				if (Contact_Player_Enemy(EnemyNum) == true && NoDamageTimeCount >= NoDamageTime)
 				{
@@ -253,6 +257,8 @@ void DrawProcessing()
 	Engine::DrawTexture(BackGround_grass_1, 400.0f, "grass");
 	Engine::DrawTexture(BackGround_grass_2, 400.0f, "grass");
 
+	Engine::DrawTexture(0.0f, 0.0f, "UI", 255, 0.0f, 1.5f, 0.3f);
+
 	switch (Phase)
 	{
 	case title:
@@ -280,7 +286,10 @@ void DrawProcessing()
 			}
 		}
 
-		Engine::DrawFont(0.0f, 0.0f, "HP：", FontSize::Large, FontColor::White);
+		Engine::DrawTexture(0.0f, 0.0f, "UI", 255, 0.0f, 1.5f, 0.3f);
+
+
+		Engine::DrawFont(0.0f, 5.0f, "HP：", FontSize::Large, FontColor::Black);
 		for (int HpNum = 0; HpNum < Hp_Max; HpNum++)
 		{
 			switch (HpCount[HpNum])
@@ -309,7 +318,7 @@ void DrawProcessing()
 
 		break;
 	case result:
-		Engine::DrawFont(0.0f, 0.0f, "HP：", FontSize::Large, FontColor::White);
+		Engine::DrawFont(0.0f, 0.0f, "HP：", FontSize::Large, FontColor::Black);
 		for (int HpNum = 0; HpNum < Hp_Max; HpNum++)
 		{
 			switch (HpCount[HpNum])
@@ -345,9 +354,9 @@ void PlayerMachineMove()
 	if (Engine::IsKeyboardKeyHeld(DIK_UP) == true)
 	{
 		Playerpos_y -= 3;
-		if (Playerpos_y <= 0.0f)
+		if (Playerpos_y <= 30.0f)
 		{
-			Playerpos_y = 0.0f;
+			Playerpos_y = 30.0f;
 		}
 	}
 	if (Engine::IsKeyboardKeyHeld(DIK_DOWN) == true)
@@ -417,23 +426,35 @@ void EnemySpownControl()
 		if (EnemySpown[EnemyNum] == false)
 		{
 			EnemyClone[EnemyNum].Enemypos_x = 650.0f;
-			EnemyClone[EnemyNum].Enemypos_y = rand() % 400 + 40;
+			EnemyClone[EnemyNum].Enemypos_y = rand() % 260 + 100;
 			EnemySpown[EnemyNum] = true;
 			break;
 		}
 	}
 }
 
-//敵の移動速度
-void Enemy::EnemyMove()
+//敵の移動
+void Enemy::EnemyMove(int num)
 {
-	Enemypos_x -= 3.0f;
+	
+	EnemyClone[num].Theta += ThetaSpeed;
+	if (EnemyClone[num].Theta > 360)
+	{
+		EnemyClone[num].Theta = 0;
+	}
+
+	EnemyClone[num].Enemypos_x -= sinf(EnemyClone[num].Theta * M_PI/180) * 4;
+	EnemyClone[num].Enemypos_y -= cosf(EnemyClone[num].Theta * M_PI/180) * 4;
+//	if (EnemyClone[num].Theta >= 45 && EnemyClone[num].Theta <= 135)
+//	{
+		EnemyClone[num].Enemypos_x -= 2.0f;
+//	}
 }
 
 //敵の消滅
 void Enemy::EnemyDisappearance(int num)
 {
-	if (EnemyClone[num].Enemypos_x <= -20.0f ||
+	if (EnemyClone[num].Enemypos_x <= -60.0f ||
 		Contact_Player_Enemy(num) == true)
 	{
 		EnemySpown[num] = false;
@@ -452,8 +473,8 @@ bool  Contact_Player_Enemy(int num)
 	if (
 		((Playerpos_x +  4.0f >= EnemyClone[num].Enemypos_x &&
 		  Playerpos_x +  4.0f <= EnemyClone[num].Enemypos_x + 91.5f) ||
-		 (Playerpos_x + 59.0f >= EnemyClone[num].Enemypos_x &&
-		  Playerpos_x + 59.0f <= EnemyClone[num].Enemypos_x + 91.5f))
+		 (Playerpos_x + 32.0f >= EnemyClone[num].Enemypos_x &&
+		  Playerpos_x + 32.0f <= EnemyClone[num].Enemypos_x + 91.5f))
 		&&
 		((Playerpos_y + 14.0f <= EnemyClone[num].Enemypos_y &&
 		  Playerpos_y + 50.0f >= EnemyClone[num].Enemypos_y ) ||
@@ -507,15 +528,15 @@ void HpDecrease()
 	}
 }
 
-
+//背景のスクロール
 void BackGroundMove()
 {
-	BackGround_cloud_1 -= 1.0f;
+	BackGround_cloud_1 -= 0.5f;
 	if (BackGround_cloud_1 <= -1536.0f)
 	{
 		BackGround_cloud_1 = 1536.0f;
 	}
-	BackGround_cloud_2 -= 1.0f;
+	BackGround_cloud_2 -= 0.5f;
 	if (BackGround_cloud_2 <= -1536.0f)
 	{
 		BackGround_cloud_2 = 1536.0f;
@@ -533,3 +554,4 @@ void BackGroundMove()
 	}
 
 }
+
