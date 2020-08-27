@@ -4,15 +4,22 @@
 #include <Windows.h>
 #include "Engine/Engine.h"
 #include "Common/Vec.h"
+#include <time.h>
 
 // ゲーム処理
 void GameProcessing();
 // 描画処理
 void DrawProcessing();
 
-float player_posx=320.0f;
+float player_posx=320.0f;	//プレイヤーの初期値
 float player_posy=240.0f;
+float Enemy_posx = 620.0f;	//エネミーの初期値
+float Enemy_posy = 240.0f;
+float CreateTimer = 0.0;
+int FramCount=0.0f;
+
 void Playermove();
+void Enemymove();
 
 /*
 	エントリポイント
@@ -29,16 +36,20 @@ int WINAPI WinMain(
 	{
 		return 0;
 	}
+	
 
-	Engine::LoadTexture("PlayerMachine", "Res/Robot.PNG");		
+	Engine::LoadTexture("PlayerMachine", "Res/Robot.PNG");	//ロボットの画像読み込み
+	Engine::LoadTexture("Enemy", "Res/EA1.PNG");			//エネミー
 
 	while (true)
 	{
+		
 		bool message_ret = false;
 		MSG msg;
 
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
+			
 			if (msg.message == WM_QUIT)
 			{
 				break;
@@ -51,12 +62,14 @@ int WINAPI WinMain(
 		}
 		else
 		{
+			
 			// ゲーム処理
 			GameProcessing();
 
 			// 描画開始
 			DrawProcessing();
 		}
+		
 	}
 
 	// エンジン終了
@@ -75,7 +88,9 @@ void GameProcessing()
 {
 	// 入力データの更新
 	Engine::Update();
+	FramCount++;
 	Playermove();
+	Enemymove();
 }
 
 void DrawProcessing()
@@ -84,6 +99,7 @@ void DrawProcessing()
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 	Engine::DrawTexture(player_posx, player_posy, "PlayerMachine");
+	Engine::DrawTexture(Enemy_posx, Enemy_posy, "Enemy");
 
 
 	// 描画終了
@@ -110,5 +126,14 @@ void Playermove()
 	if (Engine::IsKeyboardKeyHeld(DIK_LEFT)==true&&player_posx>0)
 	{
 		player_posx -= 5;
+	}
+}
+
+void Enemymove()
+{
+
+	if (FramCount>=120)
+	{
+		Enemy_posx -= 5;
 	}
 }
