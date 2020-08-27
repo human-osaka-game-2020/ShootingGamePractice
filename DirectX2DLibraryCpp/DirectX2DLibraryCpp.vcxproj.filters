@@ -81,5 +81,8 @@
     <ClInclude Include="Src\Engine\TextureManager.h">
       <Filter>ソース ファイル\Engine</Filter>
     </ClInclude>
+    <ClInclude Include="Src\Common\Player.h">
+      <Filter>ソース ファイル\Common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

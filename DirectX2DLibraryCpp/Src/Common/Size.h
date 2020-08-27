@@ -5,6 +5,12 @@
 #ifndef SIZE_H_
 #define SIZE_H_
 
+const int WINDOW_WIDTH = 640;
+const int WINDOW_HEIGHT = 480;
+
+const int CALC_WINDOW_X = 607;
+const int CALC_WINDOW_Y = 416;
+
 //=====================================================================//
 //! サイズデータ用構造体
 //=====================================================================//
