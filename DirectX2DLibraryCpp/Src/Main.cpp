@@ -4,9 +4,22 @@
 #include <Windows.h>
 #include "Engine/Engine.h"
 #include "Common/Vec.h"
+#include <time.h>
 
 float g_Player_x = 50.0f;		// プレイヤーのx座標
 float g_Player_y = 215.0f;		// プレイヤーのy座標
+const int EnemyStock = 10;		// 敵の出現可能数
+bool EnemySpon[EnemyStock];		// 敵が出現しているか判断
+int EnemySponTime = 0;			// 敵が出現した時間
+int EnemyElapsedTime = 0;		// 前の敵が出現して経過した時間
+
+class Enemy						
+{
+public:
+	float Enemy_x;		// 敵のx座標
+	float Enemy_y;		// 敵のy座標
+};
+Enemy EA[EnemyStock];		// EnemyをEnemyStock個分複製
 
 // ゲーム処理
 void GameProcessing();
@@ -14,6 +27,8 @@ void GameProcessing();
 void DrawProcessing();
 
 void PlayerMove();
+void EnemyMove();
+void EnemyDraw();
 
 /*
 	エントリポイント
@@ -33,6 +48,10 @@ int WINAPI WinMain(
 
 	// 画像読み込み
 	Engine::LoadTexture("Player", "Res/Player.png");
+	Engine::LoadTexture("Enemy1", "Res/Enemy1.png");
+
+	srand((unsigned)time(NULL));
+	EnemySponTime = timeGetTime();
 
 	while (true)
 	{
@@ -80,6 +99,8 @@ void GameProcessing()
 
 	PlayerMove();
 
+	EnemyMove();
+	
 }
 
 void DrawProcessing()
@@ -89,7 +110,8 @@ void DrawProcessing()
 	Engine::StartDrawing(0);
 
 	// テクスチャ描画
-	Engine::DrawTexture(g_Player_x, g_Player_y, "Player");
+	Engine::DrawTexture(g_Player_x, g_Player_y, "Player",255,0.0f,1.2f,1.2f);
+	EnemyDraw();
 
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
@@ -114,5 +136,41 @@ void PlayerMove()
 	if (Engine::IsKeyboardKeyHeld(DIK_RIGHT)&& g_Player_x <= 580)
 	{	
 		g_Player_x += 2.0f;	
+	}
+}
+
+// 敵の動き
+void EnemyMove()
+{
+	for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
+	{
+		EnemyElapsedTime = timeGetTime() - EnemySponTime;
+		if (EnemySpon[EnemyNum] == false && EnemyElapsedTime >= 1200)
+		{
+			EnemySpon[EnemyNum] = true;
+			EA[EnemyNum].Enemy_x = 640.0f;
+			EA[EnemyNum].Enemy_y = 100.0f + rand() % 20 * 16;
+			EnemySponTime = timeGetTime();
+		}
+		if (EnemySpon[EnemyNum] == true)
+		{
+			EA[EnemyNum].Enemy_x -= 2.0f;
+			if (EA[EnemyNum].Enemy_x <= -60.0f)
+			{
+				EnemySpon[EnemyNum] = false;
+			}
+		}
+	}
+}
+
+// 敵の描写
+void EnemyDraw()
+{
+	for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
+	{
+		if (EnemySpon[EnemyNum] == true)
+		{
+			Engine::DrawTexture(EA[EnemyNum].Enemy_x, EA[EnemyNum].Enemy_y, "Enemy1",255,0.0f,1.2f,1.2f);
+		}
 	}
 }
