@@ -12,6 +12,10 @@ const int EnemyStock = 10;		// 敵の出現可能数
 bool EnemySpon[EnemyStock];		// 敵が出現しているか判断
 int EnemySponTime = 0;			// 敵が出現した時間
 int EnemyElapsedTime = 0;		// 前の敵が出現して経過した時間
+const int BulletStock = 10;		// 弾の出現可能数
+bool BulletSpon[BulletStock];	// 弾が出現しているか判断
+int BulletSponTime = 0;			// 弾の出現した時間
+int BulletElapsedTime = 0;		// 前の弾が出現して経過した時間
 
 class Enemy						
 {
@@ -21,6 +25,14 @@ public:
 };
 Enemy EA[EnemyStock];		// EnemyをEnemyStock個分複製
 
+class Bullet
+{
+public:
+	float Bullet_x;		// 弾のx座標
+	float Bullet_y;		// 弾のy座標
+};
+Bullet BulletPos[BulletStock];		// BulletをBulletStock個分複製
+
 // ゲーム処理
 void GameProcessing();
 // 描画処理
@@ -29,6 +41,8 @@ void DrawProcessing();
 void PlayerMove();
 void EnemyMove();
 void EnemyDraw();
+void BulletMove();
+void BulletDraw();
 
 /*
 	エントリポイント
@@ -49,9 +63,12 @@ int WINAPI WinMain(
 	// 画像読み込み
 	Engine::LoadTexture("Player", "Res/Player.png");
 	Engine::LoadTexture("Enemy1", "Res/Enemy1.png");
+	Engine::LoadTexture("Bullet1", "Res/Bullet1.png");
 
 	srand((unsigned)time(NULL));
+
 	EnemySponTime = timeGetTime();
+	BulletSponTime = timeGetTime() - 400;
 
 	while (true)
 	{
@@ -101,6 +118,7 @@ void GameProcessing()
 
 	EnemyMove();
 	
+	BulletMove();
 }
 
 void DrawProcessing()
@@ -112,6 +130,7 @@ void DrawProcessing()
 	// テクスチャ描画
 	Engine::DrawTexture(g_Player_x, g_Player_y, "Player",255,0.0f,1.2f,1.2f);
 	EnemyDraw();
+	BulletDraw();
 
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
@@ -171,6 +190,45 @@ void EnemyDraw()
 		if (EnemySpon[EnemyNum] == true)
 		{
 			Engine::DrawTexture(EA[EnemyNum].Enemy_x, EA[EnemyNum].Enemy_y, "Enemy1",255,0.0f,1.2f,1.2f);
+		}
+	}
+}
+
+// 弾の発射
+void BulletMove()
+{
+	for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
+	{
+		BulletElapsedTime = timeGetTime() - BulletSponTime;
+		if (BulletSpon[BulletNum] == false && BulletElapsedTime >= 400)
+		{
+			if (Engine::IsKeyboardKeyPushed(DIK_SPACE))
+			{
+				BulletSpon[BulletNum] = true;
+				BulletPos[BulletNum].Bullet_x = g_Player_x + 66.0f;
+				BulletPos[BulletNum].Bullet_y = g_Player_y + 33.0f;
+				BulletSponTime = timeGetTime();
+			}
+		}
+		if (BulletSpon[BulletNum] == true)
+		{
+			BulletPos[BulletNum].Bullet_x += 3.0f;
+			if (BulletPos[BulletNum].Bullet_x >= 650.0f)
+			{
+				BulletSpon[BulletNum] = false;
+			}
+		}
+	}
+}
+
+// 弾の描写
+void BulletDraw()
+{
+	for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
+	{
+		if (BulletSpon[BulletNum] == true)
+		{
+			Engine::DrawTexture(BulletPos[BulletNum].Bullet_x, BulletPos[BulletNum].Bullet_y,"Bullet1",255,0.0f,0.75f,0.75f);
 		}
 	}
 }
