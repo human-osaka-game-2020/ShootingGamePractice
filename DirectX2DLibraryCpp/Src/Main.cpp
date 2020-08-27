@@ -2,9 +2,12 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 #include <Windows.h>
+#include <string.h>
+#include <time.h>
 #include "Engine/Engine.h"
 #include "Common/Vec.h"
 #include "Common/Player.h"
+#include "Common/Enemy.h"
 
 // ゲーム処理
 void GameProcessing();
@@ -12,6 +15,11 @@ void GameProcessing();
 void DrawProcessing();
 
 Player player;
+Enemy enemy;
+
+double spawnIntarval = 3.0f;
+bool enemyInvisible = false;
+double startTime = clock() / CLOCKS_PER_SEC;
 
 /*
 	エントリポイント
@@ -115,21 +123,35 @@ void DrawProcessing()
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 
+	// プレイヤーの描画
 	Engine::LoadTexture("Player", "Res/Chocolate.png");
 	Engine::DrawTexture(player.pos_x, player.pos_y, "Player");
 
-	char buf[20];
+	// 敵の描画 ３秒ごとに出現、消滅する
+	if (clock() / CLOCKS_PER_SEC - startTime > spawnIntarval) {
+		startTime += spawnIntarval;
+		enemyInvisible = !enemyInvisible;
+	}
+	Engine::LoadTexture("Enemy", "Res/Window.png");
+	if (enemyInvisible) {
+		Engine::DrawTexture(enemy.pos_x, enemy.pos_y, "Enemy", 0, 0.0f, 1.0f, 1.0f);
+	}
+	else {
+		Engine::DrawTexture(enemy.pos_x, enemy.pos_y, "Enemy", UCHAR_MAX, 0.0f, 1.0f, 1.0f);
+	}
 
-	snprintf(buf, 20, "%.2f", player.pos_x);
-	puts(buf);
-	Engine::DrawFont(200.0f, 200.0f, buf, Large, Red);
+	// X座標とY座標の表示
+	char buf_x[10];
+	char buf_y[10];
+	char printPos[30];
 
-	char bufy[20];
+	snprintf(buf_x, 20, "%.2f", player.pos_x);
+	puts(buf_x);
+	snprintf(buf_y, 20, "%.2f", player.pos_y);
+	puts(buf_y);
 
-	snprintf(bufy, 20, "%.2f", player.pos_y);
-	puts(bufy);
-	Engine::DrawFont(400.0f, 200.0f, bufy, Large, Red);
-
+	sprintf_s(printPos, "X:%s - Y:%s", buf_x, buf_y);
+	Engine::DrawFont(0.0f, 0.0f, printPos, Regular, Red);
 
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
