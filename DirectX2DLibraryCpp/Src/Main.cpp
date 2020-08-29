@@ -11,15 +11,30 @@ void GameProcessing();
 // 描画処理
 void DrawProcessing();
 
+int FramCount_Enemy = 0;			//
+
 float player_posx=320.0f;	//プレイヤーの初期値
 float player_posy=240.0f;
-float Enemy_posx = 620.0f;	//エネミーの初期値
+float Enemy_posx = 640.0f;	//エネミーの初期値
 float Enemy_posy = 240.0f;
-float CreateTimer = 0.0;
-int FramCount=0.0f;
 
+const int Enemys = 3;		//エネミーの数
+
+class Enemy
+{
+public:
+	float Enemy_posx = 620.0f;	//エネミーの初期値
+	float Enemy_posy = 240.0f;
+
+	
+};
+bool EnemyAppearance[Enemys] = {};	//出現の判断
+Enemy enemy[Enemys];	//複製するための変数
+
+void Erase();
+void EnemyClone();
 void Playermove();
-void Enemymove();
+
 
 /*
 	エントリポイント
@@ -50,6 +65,7 @@ int WINAPI WinMain(
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			
+
 			if (msg.message == WM_QUIT)
 			{
 				break;
@@ -88,9 +104,21 @@ void GameProcessing()
 {
 	// 入力データの更新
 	Engine::Update();
-	FramCount++;
+	FramCount_Enemy++;
 	Playermove();
-	Enemymove();
+	EnemyClone();
+	Erase();
+	for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++) 
+	{
+		if (FramCount_Enemy > 60 && EnemyAppearance[EnemyNUM]==false)
+		{
+			EnemyAppearance[EnemyNUM] = true;
+			enemy[EnemyNUM].Enemy_posx = 620;
+			FramCount_Enemy = 0;
+			break;
+		}
+	}
+	
 }
 
 void DrawProcessing()
@@ -99,9 +127,16 @@ void DrawProcessing()
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 	Engine::DrawTexture(player_posx, player_posy, "PlayerMachine");
-	Engine::DrawTexture(Enemy_posx, Enemy_posy, "Enemy");
 
-
+	for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++)
+	{
+		if (EnemyAppearance[EnemyNUM] == true)
+		{
+			Engine::DrawTexture(enemy[EnemyNUM].Enemy_posx, enemy[EnemyNUM].Enemy_posy, "Enemy");
+		}
+	}
+	
+	
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
 	Engine::FinishDrawing();
@@ -129,11 +164,28 @@ void Playermove()
 	}
 }
 
-void Enemymove()
+//エネミーを複製
+void EnemyClone()
 {
-
-	if (FramCount>=120)
+	for (int EnemyCount = 0; EnemyCount < Enemys; EnemyCount++)
 	{
-		Enemy_posx -= 5;
+		if (EnemyAppearance[EnemyCount] == true)
+		{
+			enemy[EnemyCount].Enemy_posx -= 3;
+			enemy[EnemyCount].Enemy_posy = 240;
+		}
 	}
+}
+
+//エネミーを消す
+void Erase()
+{
+	for (int enemyNUM = 0; enemyNUM < Enemys; enemyNUM++)
+	{
+		if (enemy[enemyNUM].Enemy_posx < 0)
+		{
+			EnemyAppearance[enemyNUM] = false;
+		}
+	}
+	
 }
