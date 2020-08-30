@@ -12,29 +12,40 @@ void GameProcessing();
 void DrawProcessing();
 
 int FramCount_Enemy = 0;			//
-
+int FramCount_Bullet = 0;
 float player_posx=320.0f;	//プレイヤーの初期値
 float player_posy=240.0f;
 float Enemy_posx = 640.0f;	//エネミーの初期値
 float Enemy_posy = 240.0f;
+float bullet_posx = 0;
+float bullet_posy = 0;
 
-const int Enemys = 3;		//エネミーの数
+const int Enemys = 3;				//エネミーの数
+const int Bullets = 10;				//バレットの数
 
 class Enemy
 {
 public:
-	float Enemy_posx = 620.0f;	//エネミーの初期値
+	float Enemy_posx = 620.0f;		//エネミーの初期値
 	float Enemy_posy = 240.0f;
-
-	
 };
-bool EnemyAppearance[Enemys] = {};	//出現の判断
-Enemy enemy[Enemys];	//複製するための変数
+bool EnemyAppearance[Enemys] = {};	//エネミーの出現判断
+Enemy enemy[Enemys];				//エネミーを複製するための変数
 
-void Erase();
+class Bullet
+{
+public:
+	float bullet_posx = player_posx;			//バレットの初期値
+	float bullet_posy = player_posy;
+};
+bool bulletAppearance[Bullets] = {};//バレットの出現判断
+Bullet bullet[Bullets];				//バレット複製
+
+void EnemyErase();
 void EnemyClone();
 void Playermove();
-
+void BulletClone();
+void BulletErase();
 
 /*
 	エントリポイント
@@ -55,6 +66,7 @@ int WINAPI WinMain(
 
 	Engine::LoadTexture("PlayerMachine", "Res/Robot.PNG");	//ロボットの画像読み込み
 	Engine::LoadTexture("Enemy", "Res/EA1.PNG");			//エネミー
+	Engine::LoadTexture("Bullet", "Res/Bullet1.PNG");		//バレット
 
 	while (true)
 	{
@@ -105,9 +117,12 @@ void GameProcessing()
 	// 入力データの更新
 	Engine::Update();
 	FramCount_Enemy++;
+	FramCount_Bullet++;
 	Playermove();
 	EnemyClone();
-	Erase();
+	EnemyErase();
+	BulletClone();
+	BulletErase();
 	for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++) 
 	{
 		if (FramCount_Enemy > 60 && EnemyAppearance[EnemyNUM]==false)
@@ -127,7 +142,15 @@ void DrawProcessing()
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 	Engine::DrawTexture(player_posx, player_posy, "PlayerMachine");
-
+	for (int BulletNUM=0;BulletNUM<Bullets;BulletNUM++)
+	{
+		if (bulletAppearance[BulletNUM] == true)
+		{
+			Engine::DrawTexture(bullet[BulletNUM].bullet_posx, bullet[BulletNUM].bullet_posy, "Bullet");
+		}
+	}
+	
+	
 	for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++)
 	{
 		if (EnemyAppearance[EnemyNUM] == true)
@@ -162,6 +185,19 @@ void Playermove()
 	{
 		player_posx -= 5;
 	}
+	if (Engine::IsKeyboardKeyPushed(DIK_SPACE) == true)
+	{
+		for (int bulletNUM = 0; bulletNUM < Bullets; bulletNUM++)
+		{
+			if (FramCount_Bullet >5 && bulletAppearance[bulletNUM] == false)
+			{
+				bulletAppearance[bulletNUM] = true;
+				bullet[bulletNUM].bullet_posx = player_posx;
+				bullet[bulletNUM].bullet_posy = player_posy;
+				FramCount_Bullet = 0;
+			}
+		}
+	}
 }
 
 //エネミーを複製
@@ -178,7 +214,7 @@ void EnemyClone()
 }
 
 //エネミーを消す
-void Erase()
+void EnemyErase()
 {
 	for (int enemyNUM = 0; enemyNUM < Enemys; enemyNUM++)
 	{
@@ -189,3 +225,28 @@ void Erase()
 	}
 	
 }
+
+//バレット複製
+void BulletClone()
+{
+	for (int bulletNUM=0;bulletNUM<Bullets;bulletNUM++)
+	{
+		if (bulletAppearance[bulletNUM] == true)
+		{
+			bullet[bulletNUM].bullet_posx += 3;
+		}
+	}
+}
+
+//バレットを消す
+void BulletErase()
+{
+	for (int bulletNUM = 0; bulletNUM < Bullets; bulletNUM++)
+	{
+		if (bullet[bulletNUM].bullet_posx > 640)
+		{
+			bulletAppearance[bulletNUM] = false;
+		}
+	}
+}
+
