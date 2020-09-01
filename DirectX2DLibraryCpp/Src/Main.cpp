@@ -8,7 +8,8 @@
 Vec2 P_Position = Vec2(150.0f, 220.0f);               // プレイヤーの初期座標
 Vec2 E_Position = Vec2(800.0f, 0.0f);                 // 敵の初期座標
 Vec2 A_Position = Vec2(800.0f, 150.0f);               // アヒルの初期座標
-Vec2 K_Position = Vec2(800.0f, 100.0f);               // コロシテくんの初期座標
+Vec2 K_Position = Vec2(800.0f, 300.0f);               // コロシテくんの初期座標
+Vec2 B_Position = Vec2(P_Position.X, P_Position.Y);   // 弾の初期座標
 
 
 float K_Angle = 0.0f;
@@ -16,16 +17,19 @@ float K_Angle = 0.0f;
 bool Enemy_Alive = true;
 bool Ahiru_Alive = true;
 bool Korositekun_Alive = true;
+bool Bullet_Alive;
 
 float Playerspeed      = 10.0f;    // プレイヤーの速度
 float Enemyspeed       = 4.0f;     // 敵の速度
 float Ahiruspeed_X     = 3.0f;     // アヒルの速度
 float Ahiruspeed_Y     = 4.0f;     // アヒルの速度
 float Korositekunspeed = 5.0f;     // コロシテくんの速度
+float Bulletspeed = 50.0f;         // 弾の速度
 
 int Enemy_Array[];       // 敵の保存配列
 int Ahiru_Array[];       // アヒルの保存配列
 int Korositekun_Array[]; // コロシテくんの保存配列
+int Bullet_Array[];      // 弾の保存配列
 
 int E_Counter = 0; // 敵のカウント
 int A_Counter = 0; // アヒルのカウント
@@ -34,11 +38,13 @@ void Player();          // プレイヤーの動き
 void Enemy();           // 敵の動き
 void Ahiru();           // アヒルの動き
 void Korositekun();     // コロシテくんの動き
+void Bullet();          // 弾の動き
 
 void DrawPlayer();      // プレイヤーの描画
 void DrawEnemy();       // 敵の描画
 void DrawAhiru();       // アヒルの描画
 void DrawKorositekun(); // コロシテくんの描画
+void DrawBullet();      // 弾の描画
 
 // ゲーム処理
 void GameProcessing();
@@ -66,6 +72,7 @@ int WINAPI WinMain(
 	Engine::LoadTexture("Enemy", "Res/Enemy.png");
 	Engine::LoadTexture("Ahiru", "Res/ahiru.png");
 	Engine::LoadTexture("Korositekun", "Res/korositekun.png");
+	Engine::LoadTexture("Bullet", "Res/kitune.png");
 
 	// サウンド読み込み
 
@@ -131,12 +138,12 @@ void Player()
 	{
 		P_Position.Y += Playerspeed;
 	}
-//	else if (Engine::IsKeyboardKeyPushed(DIK_SPACE) == true && Bullet_Alive == false)
-//	{
-//		Bullet_Alive = true;
-//		B_Position.X = P_Position.X - 20.0f;
-//		B_Position.Y = P_Position.Y - 50.0f;
-//	}
+	else if (Engine::IsKeyboardKeyPushed(DIK_SPACE) == true && Bullet_Alive == false)
+	{
+		Bullet_Alive = true;
+		B_Position.X = P_Position.X;
+		B_Position.Y = P_Position.Y + 5.0f;
+	}
 }
 void Enemy()
 {
@@ -161,10 +168,12 @@ void Korositekun()
 
 	if (K_Position.X < 500.0f)
 	{
-
 		K_Angle -= 50.0f;
-
 	}
+}
+void Bullet()
+{
+	B_Position.X += Bulletspeed;
 }
 
 void DrawPlayer()
@@ -216,6 +225,19 @@ void DrawKorositekun()
 		Korositekun_Alive = false;
 	}
 }
+void DrawBullet()
+{
+	// 弾の描画
+	if (Bullet_Alive == true)
+	{
+		Engine::DrawTexture(B_Position.X, B_Position.Y, "Bullet", 500, 0.0f, 0.1f, 0.1f);
+	}
+
+	if (B_Position.X > 800)
+	{
+		Bullet_Alive = false;
+	}
+}
 
 void GameProcessing()
 {
@@ -229,6 +251,8 @@ void GameProcessing()
 	Ahiru();
 
 	Korositekun();
+
+	Bullet();
 }
 
 void DrawProcessing()
@@ -243,6 +267,8 @@ void DrawProcessing()
 	DrawAhiru();
 
 	DrawKorositekun();
+
+	DrawBullet();
 
 	// 描画終了
 	Engine::FinishDrawing();
