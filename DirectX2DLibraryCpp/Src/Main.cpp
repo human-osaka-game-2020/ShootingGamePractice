@@ -5,19 +5,20 @@
 #include "Engine/Engine.h"
 #include "Common/Vec.h"
 
-Vec2 P_Position = Vec2(150.0f, 220.0f);               // プレイヤーの初期座標
-Vec2 E_Position = Vec2(800.0f, 0.0f);                 // 敵の初期座標
-Vec2 A_Position = Vec2(800.0f, 150.0f);               // アヒルの初期座標
-Vec2 K_Position = Vec2(800.0f, 300.0f);               // コロシテくんの初期座標
-Vec2 B_Position = Vec2(P_Position.X, P_Position.Y);   // 弾の初期座標
-Vec2 BG_Position_A = Vec2(295.0f , 0.0f);             // 背景の初期座標
+const int ENEMY_MAX = 10;
+
+Vec2 P_Position = Vec2(150.0f, 220.0f);                // プレイヤーの初期座標
+Vec2 E_Position[ENEMY_MAX];                            // 敵の初期座標                 
+Vec2 A_Position = Vec2(1000.0f, 150.0f);               // アヒルの初期座標
+Vec2 K_Position = Vec2(1000.0f, 300.0f);               // コロシテくんの初期座標
+Vec2 B_Position = Vec2(P_Position.X, P_Position.Y);    // 弾の初期座標
+Vec2 BG_Position_A = Vec2(295.0f , 0.0f);              // 背景の初期座標
 Vec2 BG_Position_B = Vec2(-215.0f, 0.0f);
 Vec2 BG_Position_C = Vec2(807.0f , 0.0f);
 
-
 float K_Angle = 0.0f;
 
-bool Enemy_Alive = true;
+bool Enemy_Alive[ENEMY_MAX] = {};
 bool Ahiru_Alive = true;
 bool Korositekun_Alive = true;
 bool Bullet_Alive;
@@ -30,14 +31,17 @@ float Korositekunspeed = 5.0f;     // コロシテくんの速度
 float Bulletspeed      = 50.0f;    // 弾の速度
 float BackGroundspeed  = 3.0f;     // 背景の速度
 
-int Enemy_Array[];       // 敵の保存配列
+int Enemy_Array[ENEMY_MAX];       // 敵の保存配列
 int Ahiru_Array[];       // アヒルの保存配列
 int Korositekun_Array[]; // コロシテくんの保存配列
 int Bullet_Array[];      // 弾の保存配列
 
-int E_Counter = 0;      // 敵のカウント
-int A_Counter = 0;      // アヒルのカウント
-int K_Counter = 0;      // コロシテくんのカウント
+int Time_Counter = 0;      // 時間のカウント
+int E_Counter    = 0;      // 敵のカウント
+int A_Counter    = 0;      // アヒルのカウント
+int K_Counter    = 0;      // コロシテくんのカウント
+
+int num = 0;
 
 void Player();          // プレイヤーの動き
 void Enemy();           // 敵の動き
@@ -71,6 +75,10 @@ int WINAPI WinMain(
 	// ゲームループ開始前に1度だけ実行する
 	if (Engine::Initialize(840, 480, "Shooting") == false)
 	{
+		for (int i = 0; i < 10; i++)
+		{
+			E_Position[i] = Vec2(1000.0f, 0.0f);
+		}
 		return 0;
 	}
 
@@ -153,21 +161,28 @@ void Player()
 		B_Position.Y = P_Position.Y + 5.0f;
 	}
 }
-void Enemy()
+void Enemy(int num)
 {
-	E_Position.X -= Enemyspeed;
+	Time_Counter++;
+	if (Time_Counter > 180)
+	{
+		E_Position[num].X -= Enemyspeed;
+	}
 }
 void Ahiru()
 {
-	A_Position.X -= Ahiruspeed_X;
-	A_Position.Y += Ahiruspeed_Y;
-
-	A_Counter++;
-
-	if (A_Counter == 60)
+	Time_Counter++;
+	if (Time_Counter > 300)
 	{
-		Ahiruspeed_Y *= -1;
-		A_Counter = 0;
+		A_Position.X -= Ahiruspeed_X;
+		A_Position.Y += Ahiruspeed_Y;
+
+		A_Counter++;
+		if (A_Counter == 60)
+		{
+			Ahiruspeed_Y *= -1;
+			A_Counter = 0;
+		}
 	}
 }
 void Korositekun()
@@ -197,32 +212,34 @@ void DrawPlayer()
 	// プレイヤーの描画
 	Engine::DrawTexture(P_Position.X, P_Position.Y, "Player", 500, 0.0f, 1.0f, 1.0f);
 }
-void DrawEnemy()
+void DrawEnemy(int num)
 {
 	// 敵の描画
-	if (Enemy_Alive == true)
+	Time_Counter++;
+	if (Time_Counter > num * 180)
 	{
-		Engine::DrawTexture(E_Position.X, E_Position.Y, "Enemy", 500, 0.0f, 0.5f, 0.56f);
+		if (Enemy_Alive[num] == false)
+		{
+			Engine::DrawTexture(E_Position[num].X, E_Position[num].Y, "Enemy", 500, 0.0f, 0.5f, 0.56f);
+		}
 	}
-	/*
-	for (Enemy_Array[] = 0;)
+	
+	if (E_Position[num].X < -50.0f)
 	{
-
-	}
-	*/
-	if (E_Position.X < -50.0f)
-	{
-		Enemy_Alive = false;
+		Enemy_Alive[num] = true;
 	}
 }
 void DrawAhiru()
 {
-	// Ahiruの描画
-	if (Ahiru_Alive == true)
+	Time_Counter++;
+	if (Time_Counter > 300)
 	{
-		Engine::DrawTexture(A_Position.X, A_Position.Y, "Ahiru", 500, 0.0f, 0.5f, 0.3f);
+		if (Ahiru_Alive == true)
+		{
+			Engine::DrawTexture(A_Position.X, A_Position.Y, "Ahiru", 500, 0.0f, 0.5f, 0.3f);
+		}
 	}
-
+	
 	if (A_Position.X < -50.0f)
 	{
 		Ahiru_Alive = false;
@@ -285,7 +302,11 @@ void GameProcessing()
 
 	Player();
 
-	Enemy();
+	for (int i = 0; i < 10; i++)
+	{
+		Enemy(i);
+	}
+	
 
 	Ahiru();
 
@@ -304,7 +325,11 @@ void DrawProcessing()
 
 	DrawPlayer();
 
-	DrawEnemy();
+	for (int i = 0; i < 10; i++)
+	{
+		DrawEnemy(i);
+	}
+	
 
 	DrawAhiru();
 
