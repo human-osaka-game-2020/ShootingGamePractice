@@ -37,6 +37,7 @@ int Bullet_Array[];      // 弾の保存配列
 
 int E_Counter = 0;      // 敵のカウント
 int A_Counter = 0;      // アヒルのカウント
+int K_Counter = 0;      // コロシテくんのカウント
 
 void Player();          // プレイヤーの動き
 void Enemy();           // 敵の動き
@@ -261,17 +262,17 @@ void DrawBackGround()
 
 	Engine::DrawTexture(BG_Position_C.X, BG_Position_C.Y, "BackGround", 500, 0.0f, 1.0f, 1.9f);
 
-	if (BG_Position_A.X < -400.0f)
+	if (BG_Position_A.X < -500.0f)
 	{
-		BG_Position_A.X = 1100.0f;
+		BG_Position_A.X = 1000.0f;
 	}
-	else if (BG_Position_B.X < -400.0f)
+	else if (BG_Position_B.X < -500.0f)
 	{
-		BG_Position_B.X = 1100.0f;
+		BG_Position_B.X = 1000.0f;
 	}
-	else if (BG_Position_C.X < -400.0f)
+	else if (BG_Position_C.X < -500.0f)
 	{
-		BG_Position_C.X = 1100.0f;
+		BG_Position_C.X = 1000.0f;
 	}
 }
 
