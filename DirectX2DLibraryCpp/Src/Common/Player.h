@@ -11,10 +11,12 @@
 class Player {
 
 public:
-	double pos_x = WINDOW_WIDTH / 2 - 25; // 座標X
-	double pos_y = WINDOW_HEIGHT - WINDOW_HEIGHT / 3; // 座標Y
-	double speed_Default = 3.0f; // 標準時の移動速度
-	double speed_Slow = 1.5f; // 低速モード時の移動速度
+	float pos_x = WINDOW_WIDTH / 2 - 25; // 座標X
+	float pos_y = WINDOW_HEIGHT - WINDOW_HEIGHT / 3; // 座標Y
+	float speed_Default = 3.0f; // 標準時の移動速度
+	float speed_Slow = 1.0f; // 低速モード時の移動速度
+	
+	bool threeWayMode = false; // 射撃モードの切り替え　false => 単発 , true => 3方向ショット
 
 };
 

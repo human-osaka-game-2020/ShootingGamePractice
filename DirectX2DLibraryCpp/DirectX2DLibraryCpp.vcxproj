@@ -138,6 +138,7 @@
     <ClCompile Include="Src\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Src\Common\Bullet.h" />
     <ClInclude Include="Src\Common\Enemy.h" />
     <ClInclude Include="Src\Common\Player.h" />
     <ClInclude Include="Src\Engine\Engine.h" />

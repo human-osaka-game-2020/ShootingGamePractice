@@ -87,5 +87,8 @@
     <ClInclude Include="Src\Common\Enemy.h">
       <Filter>ソース ファイル\Common</Filter>
     </ClInclude>
+    <ClInclude Include="Src\Common\Bullet.h">
+      <Filter>ソース ファイル\Common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

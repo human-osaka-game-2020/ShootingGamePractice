@@ -11,8 +11,8 @@
 class Enemy {
 
 public:
-	double pos_x = WINDOW_WIDTH / 2 - 25; // 座標X
-	double pos_y = WINDOW_HEIGHT / 3; // 座標Y
+	float pos_x = WINDOW_WIDTH / 2 - 25; // 座標X
+	float pos_y = WINDOW_HEIGHT / 3; // 座標Y
 
 };
 
