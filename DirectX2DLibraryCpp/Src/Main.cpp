@@ -5,6 +5,17 @@
 #include "Engine/Engine.h"
 #include "Common/Vec.h"
 
+Vec2 P_Position = Vec2(150.0f, 220.0f);               // プレイヤーの初期座標
+
+
+
+float Playerspeed = 10.0f;   // プレイヤーの速度
+
+
+void Player();          // プレイヤーの動き
+
+void DrawPlayer();      // プレイヤーの描画
+
 // ゲーム処理
 void GameProcessing();
 // 描画処理
@@ -21,10 +32,19 @@ int WINAPI WinMain(
 {
 	// エンジンの初期化
 	// ゲームループ開始前に1度だけ実行する
-	if (Engine::Initialize(640, 480, "Sample") == false)
+	if (Engine::Initialize(840, 480, "Shooting") == false)
 	{
 		return 0;
 	}
+
+	// テクスチャ読み込み
+	Engine::LoadTexture("Player", "Res/Aircraft.png");
+
+	// サウンド読み込み
+
+
+	// サウンド再生
+
 
 	while (true)
 	{
@@ -65,22 +85,57 @@ int WINAPI WinMain(
 
 } // プログラム終了
 
+void Player()
+{
+	// キーボードの入力取得
+	if (Engine::IsKeyboardKeyHeld(DIK_LEFT) && P_Position.X > 5 == true)
+	{
+		P_Position.X -= Playerspeed;
+	}
+	else if (Engine::IsKeyboardKeyHeld(DIK_RIGHT) && P_Position.X < 775 == true)
+	{
+		P_Position.X += Playerspeed;
+	}
+	else if (Engine::IsKeyboardKeyHeld(DIK_UP) && P_Position.Y > 0 == true)
+	{
+		P_Position.Y -= Playerspeed;
+	}
+	else if (Engine::IsKeyboardKeyHeld(DIK_DOWN) && P_Position.Y < 460 == true)
+	{
+		P_Position.Y += Playerspeed;
+	}
+//	else if (Engine::IsKeyboardKeyPushed(DIK_SPACE) == true && Bullet_Alive == false)
+//	{
+//		Bullet_Alive = true;
+//		B_Position.X = P_Position.X - 20.0f;
+//		B_Position.Y = P_Position.Y - 50.0f;
+//	}
+}
+
+
+void DrawPlayer()
+{
+	// プレイヤーの描画
+	Engine::DrawTexture(P_Position.X, P_Position.Y, "Player", 500, 0.0f, 1.0f, 1.0f);
+}
+
+
 void GameProcessing()
 {
 	// 入力データの更新
 	Engine::Update();
+
+	Player();
 
 }
 
 void DrawProcessing()
 {
 	// 描画開始
-	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 
-
+	DrawPlayer();
 
 	// 描画終了
-	// 描画処理を終了する場合、必ず最後に実行する
 	Engine::FinishDrawing();
 }
