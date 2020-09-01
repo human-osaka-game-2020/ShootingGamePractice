@@ -6,15 +6,30 @@
 #include "Common/Vec.h"
 
 Vec2 P_Position = Vec2(150.0f, 220.0f);               // プレイヤーの初期座標
+Vec2 E_Position = Vec2(800.0f, 0.0f);               // 敵の初期座標
+
+bool Enemy_Alive = true;
+
 
 
 
 float Playerspeed = 10.0f;   // プレイヤーの速度
+float Enemyspeed = 4.0f;   // 敵の速度
+
+
+int Enemy_Array[]; // 敵の保存配列
+
+
+int E_Counter = 0; // 敵のカウント
 
 
 void Player();          // プレイヤーの動き
+void Enemy();           // 敵の動き
+
 
 void DrawPlayer();      // プレイヤーの描画
+void DrawEnemy();       // 敵の描画
+
 
 // ゲーム処理
 void GameProcessing();
@@ -39,6 +54,7 @@ int WINAPI WinMain(
 
 	// テクスチャ読み込み
 	Engine::LoadTexture("Player", "Res/Aircraft.png");
+	Engine::LoadTexture("Enemy", "Res/Enemy.png");
 
 	// サウンド読み込み
 
@@ -111,14 +127,34 @@ void Player()
 //		B_Position.Y = P_Position.Y - 50.0f;
 //	}
 }
-
+void Enemy()
+{
+	E_Position.X -= Enemyspeed;
+}
 
 void DrawPlayer()
 {
 	// プレイヤーの描画
 	Engine::DrawTexture(P_Position.X, P_Position.Y, "Player", 500, 0.0f, 1.0f, 1.0f);
 }
+void DrawEnemy()
+{
+	// 敵の描画
+	if (Enemy_Alive == true)
+	{
+		Engine::DrawTexture(E_Position.X, E_Position.Y, "Enemy", 500, 0.0f, 0.5f, 0.56f);
+	}
+	/*
+	for (Enemy_Array[] = 0;)
+	{
 
+	}
+	*/
+	if (E_Position.X < 0.0f)
+	{
+		Enemy_Alive = false;
+	}
+}
 
 void GameProcessing()
 {
@@ -127,6 +163,7 @@ void GameProcessing()
 
 	Player();
 
+	Enemy();
 }
 
 void DrawProcessing()
@@ -135,6 +172,8 @@ void DrawProcessing()
 	Engine::StartDrawing(0);
 
 	DrawPlayer();
+
+	DrawEnemy();
 
 	// 描画終了
 	Engine::FinishDrawing();
