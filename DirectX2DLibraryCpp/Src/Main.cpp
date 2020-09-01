@@ -10,6 +10,9 @@ Vec2 E_Position = Vec2(800.0f, 0.0f);                 // 敵の初期座標
 Vec2 A_Position = Vec2(800.0f, 150.0f);               // アヒルの初期座標
 Vec2 K_Position = Vec2(800.0f, 300.0f);               // コロシテくんの初期座標
 Vec2 B_Position = Vec2(P_Position.X, P_Position.Y);   // 弾の初期座標
+Vec2 BG_Position_A = Vec2(295.0f , 0.0f);             // 背景の初期座標
+Vec2 BG_Position_B = Vec2(-215.0f, 0.0f);
+Vec2 BG_Position_C = Vec2(807.0f , 0.0f);
 
 
 float K_Angle = 0.0f;
@@ -24,27 +27,30 @@ float Enemyspeed       = 4.0f;     // 敵の速度
 float Ahiruspeed_X     = 3.0f;     // アヒルの速度
 float Ahiruspeed_Y     = 4.0f;     // アヒルの速度
 float Korositekunspeed = 5.0f;     // コロシテくんの速度
-float Bulletspeed = 50.0f;         // 弾の速度
+float Bulletspeed      = 50.0f;    // 弾の速度
+float BackGroundspeed  = 3.0f;     // 背景の速度
 
 int Enemy_Array[];       // 敵の保存配列
 int Ahiru_Array[];       // アヒルの保存配列
 int Korositekun_Array[]; // コロシテくんの保存配列
 int Bullet_Array[];      // 弾の保存配列
 
-int E_Counter = 0; // 敵のカウント
-int A_Counter = 0; // アヒルのカウント
+int E_Counter = 0;      // 敵のカウント
+int A_Counter = 0;      // アヒルのカウント
 
 void Player();          // プレイヤーの動き
 void Enemy();           // 敵の動き
 void Ahiru();           // アヒルの動き
 void Korositekun();     // コロシテくんの動き
 void Bullet();          // 弾の動き
+void BackGround();      // 背景の動き
 
 void DrawPlayer();      // プレイヤーの描画
 void DrawEnemy();       // 敵の描画
 void DrawAhiru();       // アヒルの描画
 void DrawKorositekun(); // コロシテくんの描画
 void DrawBullet();      // 弾の描画
+void DrawBackGround();  // 背景の描画
 
 // ゲーム処理
 void GameProcessing();
@@ -67,12 +73,13 @@ int WINAPI WinMain(
 		return 0;
 	}
 
-	// テクスチャ読み込み
+	// テクスチャ読み込み	
 	Engine::LoadTexture("Player", "Res/Aircraft.png");
 	Engine::LoadTexture("Enemy", "Res/Enemy.png");
 	Engine::LoadTexture("Ahiru", "Res/ahiru.png");
 	Engine::LoadTexture("Korositekun", "Res/korositekun.png");
 	Engine::LoadTexture("Bullet", "Res/kitune.png");
+    Engine::LoadTexture("BackGround", "Res/background.png");
 
 	// サウンド読み込み
 
@@ -175,6 +182,14 @@ void Bullet()
 {
 	B_Position.X += Bulletspeed;
 }
+void BackGround()
+{
+	BG_Position_A.X -= BackGroundspeed;
+
+	BG_Position_B.X -= BackGroundspeed;
+
+	BG_Position_C.X -= BackGroundspeed;
+}
 
 void DrawPlayer()
 {
@@ -238,11 +253,34 @@ void DrawBullet()
 		Bullet_Alive = false;
 	}
 }
+void DrawBackGround()
+{
+	Engine::DrawTexture(BG_Position_A.X, BG_Position_A.Y, "BackGround", 500, 0.0f, 1.0f, 1.9f);
+
+	Engine::DrawTexture(BG_Position_B.X, BG_Position_B.Y, "BackGround", 500, 0.0f, 1.0f, 1.9f);
+
+	Engine::DrawTexture(BG_Position_C.X, BG_Position_C.Y, "BackGround", 500, 0.0f, 1.0f, 1.9f);
+
+	if (BG_Position_A.X < -400.0f)
+	{
+		BG_Position_A.X = 1100.0f;
+	}
+	else if (BG_Position_B.X < -400.0f)
+	{
+		BG_Position_B.X = 1100.0f;
+	}
+	else if (BG_Position_C.X < -400.0f)
+	{
+		BG_Position_C.X = 1100.0f;
+	}
+}
 
 void GameProcessing()
 {
 	// 入力データの更新
 	Engine::Update();
+
+    BackGround();
 
 	Player();
 
@@ -253,12 +291,15 @@ void GameProcessing()
 	Korositekun();
 
 	Bullet();
+	
 }
 
 void DrawProcessing()
 {
 	// 描画開始
 	Engine::StartDrawing(0);
+
+    DrawBackGround();
 
 	DrawPlayer();
 
