@@ -23,6 +23,8 @@ void ShootBullet();
 void BulletMove();
 // 射撃モード切替処理
 void ToggleFireMode();
+// 当たり判定の処理
+void HitProcessing();
 
 
 Player player;
@@ -31,8 +33,6 @@ Bullet bullet01;
 Bullet bullet02;
 Bullet bullet03;
 
-double spawnIntarval = 3.0f;
-bool enemyInvisible = false;
 double startTime = clock() / CLOCKS_PER_SEC;
 
 /*
@@ -96,10 +96,14 @@ void GameProcessing()
 	// 入力データの更新
 	Engine::Update();
 
-	PlayerMove();
-	ShootBullet();
-	BulletMove();
-	ToggleFireMode();
+	if (player.isLive == true) {
+		PlayerMove();
+		ShootBullet();
+		BulletMove();
+		ToggleFireMode();
+		HitProcessing();
+	}
+
 }
 
 void DrawProcessing()
@@ -109,32 +113,33 @@ void DrawProcessing()
 	Engine::StartDrawing(0);
 
 	// プレイヤーの描画
-	Engine::LoadTexture("Player", "Res/Chocolate.png");
-	Engine::DrawTexture(player.pos_x, player.pos_y, "Player");
-
-	// 敵の描画 ３秒ごとに出現、消滅する
-	if (clock() / CLOCKS_PER_SEC - startTime > spawnIntarval) {
-		startTime += spawnIntarval;
-		enemyInvisible = !enemyInvisible;
-	}
-	Engine::LoadTexture("Enemy", "Res/Window.png");
-	if (enemyInvisible) {
-		Engine::DrawTexture(enemy.pos_x, enemy.pos_y, "Enemy", 0, 0.0f, 1.0f, 1.0f);
+	Engine::LoadTexture("Player", "Res/Player.png");
+	if (player.isLive == true) {
+		Engine::DrawTexture(player.pos_x, player.pos_y, "Player", UCHAR_MAX, 0.0f, player.textureScaling, player.textureScaling);
 	}
 	else {
-		Engine::DrawTexture(enemy.pos_x, enemy.pos_y, "Enemy", UCHAR_MAX, 0.0f, 1.0f, 1.0f);
+		Engine::DrawTexture(player.pos_x, player.pos_y, "Player", 0.0f, 0.0f, player.textureScaling, player.textureScaling);
+	}
+
+	// 敵の描画 ３秒ごとに出現、消滅する
+	Engine::LoadTexture("Enemy", "Res/Enemy.png");
+	if (enemy.isLive == true) {
+		Engine::DrawTexture(enemy.pos_x, enemy.pos_y, "Enemy", UCHAR_MAX, 0.0f, enemy.textureScaling, enemy.textureScaling);
+	}
+	else {
+		Engine::DrawTexture(enemy.pos_x, enemy.pos_y, "Enemy", 0.0f, 0.0f, enemy.textureScaling, enemy.textureScaling);
 	}
 
 	// 弾の表示
 	Engine::LoadTexture("Bullet", "Res/Bullet01.png");
 	if (bullet01.isFired == true) {
-		Engine::DrawTexture(bullet01.pos_x, bullet01.pos_y, "Bullet");
+		Engine::DrawTexture(bullet01.pos_x + 17, bullet01.pos_y, "Bullet");
 	}
 	if (bullet02.isFired == true) {
-		Engine::DrawTexture(bullet02.pos_x, bullet02.pos_y, "Bullet");
+		Engine::DrawTexture(bullet02.pos_x + 17, bullet02.pos_y, "Bullet");
 	}
 	if (bullet03.isFired == true) {
-		Engine::DrawTexture(bullet03.pos_x, bullet03.pos_y, "Bullet");
+		Engine::DrawTexture(bullet03.pos_x + 17, bullet03.pos_y, "Bullet");
 	}
 
 	// 射撃モードの表示
@@ -157,6 +162,12 @@ void DrawProcessing()
 
 	sprintf_s(printPos, "X:%s - Y:%s", buf_x, buf_y);
 	Engine::DrawFont(0.0f, 0.0f, printPos, Regular, Red);
+
+	// 敵とプレイヤーの距離
+	char aaaa[20];
+	snprintf(aaaa, 20, "%.2f", enemy.playerDistance);
+	puts(aaaa);
+	Engine::DrawFont(0.0f, 50.0f, aaaa, Regular, Red);
 
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
@@ -231,7 +242,7 @@ void BulletMove() {
 
 	// 撃たれている時は上に移動　そうでないときはプレイヤーに追従
 	if (bullet01.isFired == true) {
-		bullet01.pos_y -= 3;
+		bullet01.pos_y -= player.bullet_Speed;
 		if (bullet01.pos_y < 0) {
 			bullet01.isFired = false;
 		}
@@ -242,7 +253,7 @@ void BulletMove() {
 	}
 
 	if (bullet02.isFired == true) {
-		bullet02.pos_y -= 3;
+		bullet02.pos_y -= player.bullet_Speed;
 		if (player.threeWayMode == true) {
 			bullet02.pos_x -= 0.5f;
 		}
@@ -256,7 +267,7 @@ void BulletMove() {
 	}
 
 	if (bullet03.isFired == true) {
-		bullet03.pos_y -= 3;
+		bullet03.pos_y -= player.bullet_Speed;
 		if (player.threeWayMode == true) {
 			bullet03.pos_x += 0.5f;
 		}
@@ -275,5 +286,28 @@ void ToggleFireMode() {
 		if (bullet01.isFired == false && bullet02.isFired == false && bullet03.isFired == false) {
 			player.threeWayMode = !player.threeWayMode;
 		}
+	}
+}
+
+void HitProcessing() {
+
+	// 画像の中心
+	player.textureCenterX = player.textureScaleX * player.textureScaling / 2;
+	player.textureCenterY = player.textureScaleY * player.textureScaling / 2;
+	enemy.textureCenterX = enemy.textureScaleX * enemy.textureScaling / 2;
+	enemy.textureCenterY = enemy.textureScaleY * enemy.textureScaling / 2;
+
+	// 画像の中心を基にした座標
+	player.posCenter_x = player.pos_x + player.textureCenterX;
+	player.posCenter_y = player.pos_y + player.textureCenterY;
+	enemy.posCenter_x = enemy.pos_x + enemy.textureCenterX;
+	enemy.posCenter_y = enemy.pos_y + enemy.textureCenterY;
+
+	// 敵とプレイヤーの距離
+	enemy.playerDistance = sqrt(pow(player.posCenter_x - enemy.posCenter_x, 2.0f) + pow(player.posCenter_y - enemy.posCenter_y, 2.0f));
+
+	// 当たったかどうか
+	if (enemy.isLive == true && player.isLive == true && enemy.playerDistance < (player.hitBox + enemy.hitBox)) {
+		player.isLive = false;
 	}
 }
