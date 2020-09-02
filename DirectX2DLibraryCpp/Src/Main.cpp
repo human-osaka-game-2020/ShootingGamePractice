@@ -8,14 +8,17 @@
 
 float g_Player_x = 50.0f;		// プレイヤーのx座標
 float g_Player_y = 215.0f;		// プレイヤーのy座標
+
 const int EnemyStock = 10;		// 敵の出現可能数
-bool EnemySpon[EnemyStock];		// 敵が出現しているか判断
-int EnemySponTime = 0;			// 敵が出現した時間
+bool EnemySpawn[EnemyStock];		// 敵が出現しているか判断
+int EnemySpawnTime = 0;			// 敵が出現した時間
 int EnemyElapsedTime = 0;		// 前の敵が出現して経過した時間
+
 const int BulletStock = 10;		// 弾の出現可能数
-bool BulletSpon[BulletStock];	// 弾が出現しているか判断
-int BulletSponTime = 0;			// 弾の出現した時間
+bool BulletSpawn[BulletStock];	// 弾が出現しているか判断
+int BulletSpawnTime = 0;			// 弾の出現した時間
 int BulletElapsedTime = 0;		// 前の弾が出現して経過した時間
+
 
 class Enemy						
 {
@@ -40,9 +43,12 @@ void DrawProcessing();
 
 void PlayerMove();
 void EnemyMove();
+void EnemyDelete();
 void EnemyDraw();
 void BulletMove();
 void BulletDraw();
+bool Contact_Player_Enemy(int num);
+bool Contact_Bullet_Enemy(int num);
 
 /*
 	エントリポイント
@@ -67,8 +73,8 @@ int WINAPI WinMain(
 
 	srand((unsigned)time(NULL));
 
-	EnemySponTime = timeGetTime();
-	BulletSponTime = timeGetTime() - 400;
+	EnemySpawnTime = timeGetTime();
+	BulletSpawnTime = timeGetTime() - 400;
 
 	while (true)
 	{
@@ -117,6 +123,8 @@ void GameProcessing()
 	PlayerMove();
 
 	EnemyMove();
+
+	EnemyDelete();
 	
 	BulletMove();
 }
@@ -140,21 +148,21 @@ void DrawProcessing()
 // プレイヤーの移動
 void PlayerMove()
 {
-	if (Engine::IsKeyboardKeyHeld(DIK_UP)&& g_Player_y >= 0)
+	if (Engine::IsKeyboardKeyHeld(DIK_UP)&& g_Player_y >= 10)
 	{	
-		g_Player_y -= 2.0f;		
+		g_Player_y -= 3.0f;		
 	}
-	if (Engine::IsKeyboardKeyHeld(DIK_DOWN)&& g_Player_y <= 420)
+	if (Engine::IsKeyboardKeyHeld(DIK_DOWN)&& g_Player_y <= 400)
 	{
-		g_Player_y += 2.0f;
+		g_Player_y += 3.0f;
 	}
-	if (Engine::IsKeyboardKeyHeld(DIK_LEFT)&& g_Player_x >= 0)
+	if (Engine::IsKeyboardKeyHeld(DIK_LEFT)&& g_Player_x >= 20)
 	{
-		g_Player_x -= 2.0f;	
+		g_Player_x -= 3.0f;	
 	}
-	if (Engine::IsKeyboardKeyHeld(DIK_RIGHT)&& g_Player_x <= 580)
+	if (Engine::IsKeyboardKeyHeld(DIK_RIGHT)&& g_Player_x <= 550)
 	{	
-		g_Player_x += 2.0f;	
+		g_Player_x += 3.0f;	
 	}
 }
 
@@ -163,21 +171,31 @@ void EnemyMove()
 {
 	for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
 	{
-		EnemyElapsedTime = timeGetTime() - EnemySponTime;
-		if (EnemySpon[EnemyNum] == false && EnemyElapsedTime >= 1200)
+		EnemyElapsedTime = timeGetTime() - EnemySpawnTime;
+		if (EnemySpawn[EnemyNum] == false && EnemyElapsedTime >= 1200)
 		{
-			EnemySpon[EnemyNum] = true;
+			EnemySpawn[EnemyNum] = true;
 			EA[EnemyNum].Enemy_x = 640.0f;
 			EA[EnemyNum].Enemy_y = 100.0f + rand() % 20 * 16;
-			EnemySponTime = timeGetTime();
+			EnemySpawnTime = timeGetTime();
 		}
-		if (EnemySpon[EnemyNum] == true)
+		if (EnemySpawn[EnemyNum] == true)
 		{
 			EA[EnemyNum].Enemy_x -= 2.0f;
-			if (EA[EnemyNum].Enemy_x <= -60.0f)
-			{
-				EnemySpon[EnemyNum] = false;
-			}
+		}
+	}
+}
+
+// 敵の消滅
+void EnemyDelete()
+{
+	for (int num = 0; num < 10; num++)
+	{
+		if (EA[num].Enemy_x <= -60.0f ||
+			Contact_Player_Enemy(num) == true ||
+			Contact_Bullet_Enemy(num) == true)
+		{
+			EnemySpawn[num] = false;
 		}
 	}
 }
@@ -187,7 +205,7 @@ void EnemyDraw()
 {
 	for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
 	{
-		if (EnemySpon[EnemyNum] == true)
+		if (EnemySpawn[EnemyNum] == true)
 		{
 			Engine::DrawTexture(EA[EnemyNum].Enemy_x, EA[EnemyNum].Enemy_y, "Enemy1",255,0.0f,1.2f,1.2f);
 		}
@@ -199,23 +217,23 @@ void BulletMove()
 {
 	for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
 	{
-		BulletElapsedTime = timeGetTime() - BulletSponTime;
-		if (BulletSpon[BulletNum] == false && BulletElapsedTime >= 400)
+		BulletElapsedTime = timeGetTime() - BulletSpawnTime;
+		if (BulletSpawn[BulletNum] == false && BulletElapsedTime >= 400)
 		{
 			if (Engine::IsKeyboardKeyPushed(DIK_SPACE))
 			{
-				BulletSpon[BulletNum] = true;
+				BulletSpawn[BulletNum] = true;
 				BulletPos[BulletNum].Bullet_x = g_Player_x + 66.0f;
 				BulletPos[BulletNum].Bullet_y = g_Player_y + 33.0f;
-				BulletSponTime = timeGetTime();
+				BulletSpawnTime = timeGetTime();
 			}
 		}
-		if (BulletSpon[BulletNum] == true)
+		if (BulletSpawn[BulletNum] == true)
 		{
-			BulletPos[BulletNum].Bullet_x += 3.0f;
+			BulletPos[BulletNum].Bullet_x += 5.0f;
 			if (BulletPos[BulletNum].Bullet_x >= 650.0f)
 			{
-				BulletSpon[BulletNum] = false;
+				BulletSpawn[BulletNum] = false;
 			}
 		}
 	}
@@ -226,9 +244,53 @@ void BulletDraw()
 {
 	for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
 	{
-		if (BulletSpon[BulletNum] == true)
+		if (BulletSpawn[BulletNum] == true)
 		{
 			Engine::DrawTexture(BulletPos[BulletNum].Bullet_x, BulletPos[BulletNum].Bullet_y,"Bullet1",255,0.0f,0.75f,0.75f);
 		}
 	}
+}
+
+// 自機と敵の衝突判定
+bool Contact_Player_Enemy(int num)
+{
+	if (EnemySpawn[num] == true &&
+		((g_Player_x +  4.0f >= EA[num].Enemy_x &&
+		  g_Player_x +  4.0f <= EA[num].Enemy_x + 55.0f) ||
+		 (g_Player_x + 35.0f >= EA[num].Enemy_x &&
+		  g_Player_x + 35.0f <= EA[num].Enemy_x + 55.0f))
+		&&
+		((g_Player_y + 12.0f <= EA[num].Enemy_y &&
+		  g_Player_y + 56.0f >= EA[num].Enemy_y) ||
+		 (g_Player_y + 12.0f <= EA[num].Enemy_y + 10.0f &&
+		  g_Player_y + 56.0f >= EA[num].Enemy_y + 10.0f))
+	   )
+	{
+		return true;		
+	}
+	return false;
+}
+
+// 弾と敵の衝突判定
+bool Contact_Bullet_Enemy(int num)
+{
+	for (int BulletNum = 0; BulletNum <= BulletStock; BulletNum++)
+	{
+		if ( BulletSpawn[BulletNum]== true && EnemySpawn[num] == true &&
+			((BulletPos[BulletNum].Bullet_x         >= EA[num].Enemy_x &&
+			  BulletPos[BulletNum].Bullet_x         <= EA[num].Enemy_x + 55.0f) ||
+			 (BulletPos[BulletNum].Bullet_x + 10.0f >= EA[num].Enemy_x &&
+	   		  BulletPos[BulletNum].Bullet_x + 10.0f <= EA[num].Enemy_x + 55.0f))
+			&&
+			((BulletPos[BulletNum].Bullet_y         <= EA[num].Enemy_y &&
+ 			  BulletPos[BulletNum].Bullet_y + 10.0f >= EA[num].Enemy_y) ||
+			 (BulletPos[BulletNum].Bullet_y         <= EA[num].Enemy_y + 15.0f &&
+	 		  BulletPos[BulletNum].Bullet_y + 10.0f >= EA[num].Enemy_y + 15.0f))
+		   )
+		{
+			BulletSpawn[BulletNum] = false;
+			return true;
+		}
+	}
+	return false;
 }
