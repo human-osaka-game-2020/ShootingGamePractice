@@ -20,13 +20,15 @@ bool BulletSpawn[BulletStock];	// 弾が出現しているか判断
 int BulletSpawnTime = 0;		// 弾の出現した時間
 int BulletElapsedTime = 0;		// 前の弾が出現して経過した時間
 
+const int  BackGroundStock = 2;
+float BackGround_x[BackGroundStock] = { -200.0f,822.0f };
+float BackGround_y[BackGroundStock] = { 0.0f,0.0f };
 
 class Enemy						
 {
 public:
 	float Enemy_x;		// 敵のx座標
 	float Enemy_y;		// 敵のy座標
-	float Enemy_x_Save;		// 敵の出現したx座標
 	float Enemy_y_Save;		// 敵の出現したy座標
 	float Center_x;		// 中心座標x
 	float Center_y;		// 中心座標y
@@ -58,6 +60,8 @@ void BulletMove();
 void BulletDraw();
 bool Contact_Player_Enemy(int num);
 bool Contact_Bullet_Enemy(int num);
+void BackGroundMove();
+void BackGroundDraw();
 
 /*
 	エントリポイント
@@ -79,6 +83,7 @@ int WINAPI WinMain(
 	Engine::LoadTexture("Player", "Res/Player.png");
 	Engine::LoadTexture("Enemy1", "Res/Enemy1.png");
 	Engine::LoadTexture("Bullet1", "Res/Bullet1.png");
+	Engine::LoadTexture("BackGround", "Res/background.jpg");
 
 	srand((unsigned)time(NULL));
 
@@ -130,12 +135,10 @@ void GameProcessing()
 	Engine::Update();
 
 	PlayerMove();
-
 	EnemyMove();
-
-	EnemyDelete();
-	
+	EnemyDelete();	
 	BulletMove();
+	BackGroundMove();
 }
 
 void DrawProcessing()
@@ -145,9 +148,11 @@ void DrawProcessing()
 	Engine::StartDrawing(0);
 
 	// テクスチャ描画
+	BackGroundDraw();
 	Engine::DrawTexture(g_Player_x, g_Player_y, "Player",255,0.0f,1.2f,1.2f);
 	EnemyDraw();
 	BulletDraw();
+	
 
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
@@ -346,8 +351,10 @@ bool Contact_Bullet_Enemy(int num)
 			&&
 			((BulletPos[BulletNum].Bullet_y         <= EA[num].Enemy_y &&
  			  BulletPos[BulletNum].Bullet_y + 10.0f >= EA[num].Enemy_y) ||
-			 (BulletPos[BulletNum].Bullet_y         <= EA[num].Enemy_y + 15.0f &&
-	 		  BulletPos[BulletNum].Bullet_y + 10.0f >= EA[num].Enemy_y + 15.0f))
+			 (BulletPos[BulletNum].Bullet_y         <= EA[num].Enemy_y +  9.0f &&
+	 		  BulletPos[BulletNum].Bullet_y + 10.0f >= EA[num].Enemy_y +  9.0f)||
+			 (BulletPos[BulletNum].Bullet_y         <= EA[num].Enemy_y + 17.0f &&
+			  BulletPos[BulletNum].Bullet_y + 10.0f >= EA[num].Enemy_y + 17.0f))
 		   )
 		{
 			BulletSpawn[BulletNum] = false;
@@ -355,4 +362,27 @@ bool Contact_Bullet_Enemy(int num)
 		}
 	}
 	return false;
+}
+
+// 背景のスクロール
+void BackGroundMove()
+{
+	for (int BGNum = 0; BGNum < BackGroundStock; BGNum++)
+	{
+		BackGround_x[BGNum] -= 1.0f;
+		if (BackGround_x[BGNum] <= -1100.0f)
+		{
+			BackGround_x[BGNum] = 822.0f;
+			BackGround_y[BGNum] = 0.0f;
+		}
+	}
+}
+
+// 背景の描画
+void BackGroundDraw()
+{
+	for (int BGNum = 0; BGNum < BackGroundStock; BGNum++)
+	{
+		Engine::DrawTexture(BackGround_x[BGNum], BackGround_y[BGNum],"BackGround");
+	}
 }
