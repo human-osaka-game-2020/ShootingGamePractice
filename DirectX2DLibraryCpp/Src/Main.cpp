@@ -10,13 +10,14 @@ float g_Player_x = 50.0f;		// プレイヤーのx座標
 float g_Player_y = 215.0f;		// プレイヤーのy座標
 
 const int EnemyStock = 10;		// 敵の出現可能数
-bool EnemySpawn[EnemyStock];		// 敵が出現しているか判断
+bool EnemySpawn[EnemyStock];	// 敵が出現しているか判断
 int EnemySpawnTime = 0;			// 敵が出現した時間
 int EnemyElapsedTime = 0;		// 前の敵が出現して経過した時間
+bool EnemyMoveSwitch = false;	// 敵の動きを変えるための変数
 
 const int BulletStock = 10;		// 弾の出現可能数
 bool BulletSpawn[BulletStock];	// 弾が出現しているか判断
-int BulletSpawnTime = 0;			// 弾の出現した時間
+int BulletSpawnTime = 0;		// 弾の出現した時間
 int BulletElapsedTime = 0;		// 前の弾が出現して経過した時間
 
 
@@ -25,6 +26,12 @@ class Enemy
 public:
 	float Enemy_x;		// 敵のx座標
 	float Enemy_y;		// 敵のy座標
+	float Enemy_x_Save;		// 敵の出現したx座標
+	float Enemy_y_Save;		// 敵の出現したy座標
+	float Center_x;		// 中心座標x
+	float Center_y;		// 中心座標y
+	float Angle;		// 角度
+	float Length;		// 半径の長さ
 };
 Enemy EA[EnemyStock];		// EnemyをEnemyStock個分複製
 
@@ -43,6 +50,8 @@ void DrawProcessing();
 
 void PlayerMove();
 void EnemyMove();
+void EnemyUpDownMotion(int EnemyNum);
+void EnemyCircularMotion(int EnemyNum);
 void EnemyDelete();
 void EnemyDraw();
 void BulletMove();
@@ -177,12 +186,65 @@ void EnemyMove()
 			EnemySpawn[EnemyNum] = true;
 			EA[EnemyNum].Enemy_x = 640.0f;
 			EA[EnemyNum].Enemy_y = 100.0f + rand() % 20 * 16;
+			EA[EnemyNum].Enemy_y_Save = EA[EnemyNum].Enemy_y;
+			EA[EnemyNum].Center_x = EA[EnemyNum].Enemy_x + 10.0f;
+			EA[EnemyNum].Center_y = EA[EnemyNum].Enemy_y + 10.0f;
+			EA[EnemyNum].Length = 40.0f;
 			EnemySpawnTime = timeGetTime();
 		}
 		if (EnemySpawn[EnemyNum] == true)
 		{
 			EA[EnemyNum].Enemy_x -= 2.0f;
+			EnemyUpDownMotion(EnemyNum);
+			EnemyCircularMotion(EnemyNum);
 		}
+	}
+}
+
+// 上下に揺れながら敵の動き
+void EnemyUpDownMotion(int EnemyNum)
+{
+	if (EnemyNum == 2 || EnemyNum == 5 || EnemyNum == 8)
+	{
+		if (EA[EnemyNum].Enemy_y <= EA[EnemyNum].Enemy_y_Save - 100)
+		{
+			EnemyMoveSwitch = true;
+		}
+		else if (EA[EnemyNum].Enemy_y >= EA[EnemyNum].Enemy_y_Save + 100)
+		{
+			EnemyMoveSwitch = false;
+		}
+		if (EnemyMoveSwitch == false)
+		{
+			EA[EnemyNum].Enemy_y -= 3;
+		}
+		else if (EnemyMoveSwitch == true)
+		{
+			EA[EnemyNum].Enemy_y += 3;
+		}
+	}
+}
+
+// 円運動しながら進む敵の動き
+void EnemyCircularMotion(int EnemyNum)
+{
+	if (EnemyNum == 4 || EnemyNum == 9)
+	{
+		float radius = EA[EnemyNum].Angle * 3.14f / 180.0f;
+
+		// 三角関数を使用し、円の位置を割り出す。
+		float add_x = cos(radius) * EA[EnemyNum].Length;
+		float add_y = sin(radius) * EA[EnemyNum].Length;
+
+		EA[EnemyNum].Center_x -= 1.0f;
+
+		// 結果ででた位置を中心位置に加算し、それを描画位置とする
+		EA[EnemyNum].Enemy_x = EA[EnemyNum].Center_x + add_x;
+		EA[EnemyNum].Enemy_y = EA[EnemyNum].Center_y + add_y;
+
+		// 角度更新
+		EA[EnemyNum].Angle -= 5.0f;
+
 	}
 }
 
