@@ -27,13 +27,15 @@ void ToggleFireMode();
 void HitProcessing();
 
 
+const int BULLET_MAX = 3;
+
+
 Player player;
 Enemy enemy;
-Bullet bullet01;
-Bullet bullet02;
-Bullet bullet03;
+class Bullet bullet[BULLET_MAX];
 
 double startTime = clock() / CLOCKS_PER_SEC;
+
 
 /*
 	エントリポイント
@@ -132,14 +134,10 @@ void DrawProcessing()
 
 	// 弾の表示
 	Engine::LoadTexture("Bullet", "Res/Bullet01.png");
-	if (bullet01.isFired == true) {
-		Engine::DrawTexture(bullet01.pos_x + 17, bullet01.pos_y, "Bullet");
-	}
-	if (bullet02.isFired == true) {
-		Engine::DrawTexture(bullet02.pos_x + 17, bullet02.pos_y, "Bullet");
-	}
-	if (bullet03.isFired == true) {
-		Engine::DrawTexture(bullet03.pos_x + 17, bullet03.pos_y, "Bullet");
+	for (int i = 0; i < BULLET_MAX; i++) {
+		if (bullet[i].isFired == true) {
+			Engine::DrawTexture(bullet[i].pos_x + 17, bullet[i].pos_y, "Bullet");
+		}
 	}
 
 	// 射撃モードの表示
@@ -214,26 +212,33 @@ void ShootBullet() {
 	if (Engine::IsKeyboardKeyPushed(DIK_SPACE)) {
 		
 		if (player.threeWayMode == true) {
-			if (bullet01.isFired == false && bullet02.isFired == false && bullet03.isFired == false) {
-				bullet01.isFired = true;
-				bullet02.isFired = true;
-				bullet03.isFired = true;
-			}
-		}
-		else {
-			if (bullet01.isFired == false) {
-				bullet01.isFired = true;
-			}
-			else {
-				if (bullet02.isFired == false) {
-					bullet02.isFired = true;
+			for (int i = 0; i < BULLET_MAX; i++) {
+				if (bullet[i].isFired == false) {
+
 				}
 				else {
-					if (bullet03.isFired == false) {
-						bullet03.isFired = true;
+					break;;
+				}
+
+				if (i == BULLET_MAX - 1) {
+					for (int i = 0; i < BULLET_MAX; i++) {
+						bullet[i].isFired = true;
 					}
 				}
 			}
+		}
+		else {
+			for (int i = 0; i < BULLET_MAX; i++) {
+				if (bullet[i].isFired == false) {
+					bullet[i].isFired = true;
+					break;
+				}
+				else {
+
+				}
+			}
+
+
 		}
 	}
 }
@@ -241,73 +246,73 @@ void ShootBullet() {
 void BulletMove() {
 
 	// 撃たれている時は上に移動　そうでないときはプレイヤーに追従
-	if (bullet01.isFired == true) {
-		bullet01.pos_y -= player.bullet_Speed;
-		if (bullet01.pos_y < 0) {
-			bullet01.isFired = false;
-		}
-	}
-	else {
-		bullet01.pos_x = player.pos_x;
-		bullet01.pos_y = player.pos_y;
-	}
+	for (int i = 0; i < BULLET_MAX; i++) {
+		if (bullet[i].isFired == true) {
+			bullet[i].pos_y -= player.bullet_Speed;
 
-	if (bullet02.isFired == true) {
-		bullet02.pos_y -= player.bullet_Speed;
-		if (player.threeWayMode == true) {
-			bullet02.pos_x -= 0.5f;
-		}
-		if (bullet02.pos_y < 0) {
-			bullet02.isFired = false;
-		}
-	}
-	else {
-		bullet02.pos_x = player.pos_x;
-		bullet02.pos_y = player.pos_y;
-	}
+			// 3wayはゴリ押し 修正予定
+			if (player.threeWayMode == true) {
+				if (i == 1) {
+					bullet[i].pos_x += player.bullet_Speed / 5;
+				}
+				if (i == 2) {
+					bullet[i].pos_x -= player.bullet_Speed / 5;
+				}
+			}
 
-	if (bullet03.isFired == true) {
-		bullet03.pos_y -= player.bullet_Speed;
-		if (player.threeWayMode == true) {
-			bullet03.pos_x += 0.5f;
+			if (bullet[i].pos_y < 0) {
+				bullet[i].isFired = false;
+			}
 		}
-		if (bullet03.pos_y < 0) {
-			bullet03.isFired = false;
+		else {
+			bullet[i].pos_x = player.pos_x;
+			bullet[i].pos_y = player.pos_y;
 		}
-	}
-	else {
-		bullet03.pos_x = player.pos_x;
-		bullet03.pos_y = player.pos_y;
 	}
 }
 
 void ToggleFireMode() {
 	if (Engine::IsKeyboardKeyPushed(DIK_V)) {
-		if (bullet01.isFired == false && bullet02.isFired == false && bullet03.isFired == false) {
-			player.threeWayMode = !player.threeWayMode;
+		for (int i = 0; i < BULLET_MAX; i++) {
+			if (bullet[i].isFired == false) {
+
+			}
+			else {
+				break;;
+			}
+
+			if (i == BULLET_MAX - 1) {
+				player.threeWayMode = !player.threeWayMode;
+			}
 		}
 	}
 }
 
 void HitProcessing() {
 
-	// 画像の中心
-	player.textureCenterX = player.textureScaleX * player.textureScaling / 2;
-	player.textureCenterY = player.textureScaleY * player.textureScaling / 2;
-	enemy.textureCenterX = enemy.textureScaleX * enemy.textureScaling / 2;
-	enemy.textureCenterY = enemy.textureScaleY * enemy.textureScaling / 2;
-
-	// 画像の中心を基にした座標
-	player.posCenter_x = player.pos_x + player.textureCenterX;
-	player.posCenter_y = player.pos_y + player.textureCenterY;
-	enemy.posCenter_x = enemy.pos_x + enemy.textureCenterX;
-	enemy.posCenter_y = enemy.pos_y + enemy.textureCenterY;
+	// いろいろ計算
+	player.calcPosCenter();
+	enemy.calcPosCenter();
+	for (int i = 0; i < BULLET_MAX; i++) {
+		bullet[i].calcPosCenter();
+	}
 
 	// 敵とプレイヤーの距離
 	enemy.playerDistance = sqrt(pow(player.posCenter_x - enemy.posCenter_x, 2.0f) + pow(player.posCenter_y - enemy.posCenter_y, 2.0f));
+	// 敵と弾の距離
+	for (int i = 0; i < BULLET_MAX; i++) {
+		bullet[i].enemyDistance = sqrt(pow(bullet[i].posCenter_x - enemy.posCenter_x, 2.0f) + pow(bullet[i].posCenter_y - enemy.posCenter_y, 2.0f));
+	}
 
 	// 当たったかどうか
 	if (enemy.isLive == true && player.isLive == true && enemy.playerDistance < (player.hitBox + enemy.hitBox)) {
 		player.isLive = false;
 	}
+
+	for (int i = 0; i < BULLET_MAX; i++) {
+		if (bullet[i].isFired == true && enemy.isLive == true && bullet[i].enemyDistance < (bullet[i].hitBox + enemy.hitBox)) {
+			enemy.isLive = false;
+		}
+	}
+
 }

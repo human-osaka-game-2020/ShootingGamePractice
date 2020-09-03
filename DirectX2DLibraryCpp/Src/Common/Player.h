@@ -30,6 +30,16 @@ public:
 	bool threeWayMode = false; // 射撃モードの切り替え　false => 単発 , true => 3方向ショット
 	bool isHitting = false; // 敵に当たったかどうか
 
+public:
+
+	// 画像の中心とそれを中心にした座標の算出
+	void calcPosCenter() {
+		textureCenterX = textureScaleX * textureScaling / 2;
+		textureCenterY = textureScaleY * textureScaling / 2;
+		posCenter_x = pos_x + textureCenterX;
+		posCenter_y = pos_y + textureCenterY;
+	}
+
 };
 
 #endif

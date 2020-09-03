@@ -15,9 +15,8 @@ public:
 	float posCenter_x = 0.0f; // 画像の中心の座標X
 	float pos_y = WINDOW_HEIGHT / 3; // 座標Y
 	float posCenter_y = 0.0f; // 画像の中心の座標Y
-	float hitBox = 24.0f; // 当たり判定
+	float hitBox = 20.0f; // 当たり判定
 	float playerDistance = 0.0f; // プレイヤーまでの距離
-	float bulletDistance = 0.0f; // 弾までの距離
 
 	float textureCenterX = 0.0f; // 画像の中心X
 	float textureCenterY = 0.0f; // 画像の中心Y
@@ -27,6 +26,16 @@ public:
 
 	bool isLive = true; // 生きているかどうか
 	bool isHitting = false; // 弾に当たっているかどうか
+
+public:
+
+	// 画像の中心とそれを中心にした座標の算出
+	void calcPosCenter() {
+		textureCenterX = textureScaleX * textureScaling / 2;
+		textureCenterY = textureScaleY * textureScaling / 2;
+		posCenter_x = pos_x + textureCenterX;
+		posCenter_y = pos_y + textureCenterY;
+	}
 
 };
 
