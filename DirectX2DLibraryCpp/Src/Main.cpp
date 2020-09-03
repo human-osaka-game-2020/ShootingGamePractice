@@ -19,13 +19,13 @@ float Playerpos_y = 210.0f;	//プレイヤーのy座標
 class Bullet
 {
 public:
-	float Bulletpos_x;	//弾のx座標
-	float Bulletpos_y;	//弾のy座標
+	float Bulletpos_x;			//弾のx座標
+	float Bulletpos_y;			//弾のy座標
+	bool BulletSpown = false;	//Bulletを表示しているかを判断
 
 	void BulletMove();
-	void BulletDisappearance(int num);
+	void BulletDisappearance();
 };
-bool BulletSpown[BulletStock] = {};	//Bulletを表示しているかを判断
 Bullet BulletClone[BulletStock];	//BulletをBulletStock個複製
 
 
@@ -35,11 +35,11 @@ public:
 	float Enemypos_x = 800.0f;	//敵のx座標
 	float Enemypos_y = 0.0f;	//敵のy座標
 	float Theta = 0;
+	bool EnemySpown = false;	//Enemyを表示しているかを判断
 
 	void EnemyMove(int num);
 	void EnemyDisappearance(int num);
 };
-bool EnemySpown[EnemyStock] = {};	//Enemyを表示しているかを判断
 Enemy EnemyClone[EnemyStock];		//EnemyをEnemyStock個複製
 float ThetaSpeed = 4.0f;			//Enemyの回転速度
 
@@ -58,6 +58,18 @@ int DestroyEnemy = 0;		//弾と接触した敵の数の保存
 char c_DestroyEnemy[4];
 bool initialize = false;	//ゲームオーバー後の初期化
 
+class explosion
+{
+public:
+	float pos_x;
+	float pos_y;
+	int EffectTime = 60;
+	bool ExplosionSpown = false;
+
+};
+explosion Explosion[5];
+
+int countUV;
 
 enum phase
 {
@@ -75,6 +87,10 @@ bool Contact_Bullet_Enemy(int num);
 void HpDecrease();
 void BackGroundMove();
 
+void PlayMove();
+void EnemyMove(int num);
+void explosionMove(int x, int y, int num);
+
 // ゲーム処理
 void GameProcessing();
 // 描画処理
@@ -91,13 +107,18 @@ int WINAPI WinMain(
 {
 	// エンジンの初期化
 	// ゲームループ開始前に1度だけ実行する
-	if (Engine::Initialize(640, 480, "Sample") == false)
+	if (Engine::Initialize(640, 480, "SHOOTING-GAME") == false)
 	{
 		return 0;
 	}
 
 	Engine::LoadTexture("PlayerMachine", "Res/Robot_idle1.png");
+	Engine::LoadTexture("PlayerMachine2", "Res/Robot_idle2.png");
+	Engine::LoadTexture("PlayerMachine3", "Res/Robot_idle3.png");
 	Engine::LoadTexture("Enemy", "Res/EA1.png");
+	Engine::LoadTexture("Enemy2", "Res/EA2.png");
+	Engine::LoadTexture("Enemy3", "Res/EA3.png");
+	Engine::LoadTexture("Enemy4", "Res/EA4.png");
 	Engine::LoadTexture("Bullet", "Res/Bullet2.png");
 	Engine::LoadTexture("hart", "Res/akahart.png");
 	Engine::LoadTexture("breakhart", "Res/sirohart.png");
@@ -105,6 +126,19 @@ int WINAPI WinMain(
 	Engine::LoadTexture("cloud", "Res/sky2.PNG");
 	Engine::LoadTexture("grass", "Res/grass2.png");
 	Engine::LoadTexture("UI", "Res/white.png");
+	Engine::LoadTexture("explosion1", "Res/explosion/explosion1.png");
+	Engine::LoadTexture("explosion2", "Res/explosion/explosion2.png");
+	Engine::LoadTexture("explosion3", "Res/explosion/explosion3.png");
+	Engine::LoadTexture("explosion4", "Res/explosion/explosion4.png");
+	Engine::LoadTexture("explosion5", "Res/explosion/explosion5.png");
+	Engine::LoadTexture("explosion6", "Res/explosion/explosion6.png");
+	Engine::LoadTexture("explosion7", "Res/explosion/explosion7.png");
+	Engine::LoadTexture("explosion8", "Res/explosion/explosion8.png");
+	Engine::LoadTexture("explosion9", "Res/explosion/explosion9.png");
+	Engine::LoadTexture("explosion10", "Res/explosion/explosion10.png");
+	Engine::LoadTexture("explosion11", "Res/explosion/explosion11.png");
+
+	
 
 	srand((unsigned)time(NULL));
 
@@ -158,11 +192,11 @@ void GameProcessing()
 		{
 			for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
 			{
-				BulletSpown[BulletNum] = false;
+				BulletClone[BulletNum].BulletSpown = false;
 			}
 			for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
 			{
-				EnemySpown[EnemyNum] = false;
+				EnemyClone[EnemyNum].EnemySpown = false;
 			}
 			for (int i = 0; i < Hp_Max; i++)
 			{
@@ -184,16 +218,24 @@ void GameProcessing()
 
 		BackGroundMove();
 
+		for (int i = 0; i < 5; i++)
+		{
+			if (Explosion[i].EffectTime > 60)
+			{
+				Explosion[i].ExplosionSpown = false;
+			}
+		}
+
 		if (Engine::IsKeyboardKeyPushed(DIK_SPACE) == true)
 		{
 			CanShotBulletSearch();
 		}
 		for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
 		{
-			if (BulletSpown[BulletNum] == true)
+			if (BulletClone[BulletNum].BulletSpown == true)
 			{
 				BulletClone[BulletNum].BulletMove();
-				BulletClone[BulletNum].BulletDisappearance(BulletNum);
+				BulletClone[BulletNum].BulletDisappearance();
 			}
 		}
 		FlameCount_Bullet++;
@@ -206,7 +248,7 @@ void GameProcessing()
 		}
 		for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
 		{
-			if (EnemySpown[EnemyNum] == true)
+			if (EnemyClone[EnemyNum].EnemySpown == true)
 			{
 				EnemyClone[EnemyNum].EnemyMove(EnemyNum);
 				EnemyClone[EnemyNum].EnemyDisappearance(EnemyNum);
@@ -232,6 +274,7 @@ void GameProcessing()
 		{
 			DestroyEnemy = 100;
 		}
+
 		break;
 	case result:
 		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
@@ -257,7 +300,7 @@ void DrawProcessing()
 	Engine::DrawTexture(BackGround_grass_1, 400.0f, "grass");
 	Engine::DrawTexture(BackGround_grass_2, 400.0f, "grass");
 
-	Engine::DrawTexture(0.0f, 0.0f, "UI", 255, 0.0f, 1.5f, 0.3f);
+	countUV++;
 
 	switch (Phase)
 	{
@@ -268,21 +311,21 @@ void DrawProcessing()
 	case battle:
 		if (NoDamageTimeCount >= NoDamageTime || NoDamageTimeCount % 20 <= 10)
 		{
-			Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine");
+			PlayMove();
 		}
-		for (int bulletnum = 0; bulletnum < BulletStock; bulletnum++)
+		for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
 		{
-			if (BulletSpown[bulletnum] == true)
+			if (BulletClone[BulletNum].BulletSpown == true)
 			{
-				Engine::DrawTexture(BulletClone[bulletnum].Bulletpos_x, BulletClone[bulletnum].Bulletpos_y, "Bullet");
+				Engine::DrawTexture(BulletClone[BulletNum].Bulletpos_x, BulletClone[BulletNum].Bulletpos_y, "Bullet");
 			}
 		}
 
-		for (int enemynum = 0; enemynum < EnemyStock; enemynum++)
+		for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
 		{
-			if (EnemySpown[enemynum] == true)
+			if (EnemyClone[EnemyNum].EnemySpown == true)
 			{
-				Engine::DrawTexture(EnemyClone[enemynum].Enemypos_x, EnemyClone[enemynum].Enemypos_y, "Enemy", 255, 0.0f, 1.5f, 1.5f);
+				EnemyMove(EnemyNum);
 			}
 		}
 
@@ -315,6 +358,11 @@ void DrawProcessing()
 		}
 		Engine::DrawFont(530, 0.0f, "×", FontSize::Large, FontColor::Black);
 		Engine::DrawTexture(480, 10.0f, "Enemy");
+
+		for (int i = 0; i < 5; i++)
+		{
+			explosionMove(Explosion[i].pos_x, Explosion[i].pos_y,i);
+		}
 
 		break;
 	case result:
@@ -392,11 +440,11 @@ void CanShotBulletSearch()
 {
 	for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
 	{
-		if (BulletSpown[BulletNum] == false && FlameCount_Bullet >= 30)
+		if (BulletClone[BulletNum].BulletSpown == false && FlameCount_Bullet >= 10)
 		{
 			BulletClone[BulletNum].Bulletpos_x = Playerpos_x + 38.0f;
 			BulletClone[BulletNum].Bulletpos_y = Playerpos_y + 23.0f;
-			BulletSpown[BulletNum] = true;
+			BulletClone[BulletNum].BulletSpown = true;
 			FlameCount_Bullet = 0;
 			break;
 		}
@@ -406,15 +454,15 @@ void CanShotBulletSearch()
 //弾速
 void Bullet::BulletMove()
 {
-	Bulletpos_x += 10.0f;
+	Bulletpos_x += 15.0f;
 }
 
 //玉の消滅
-void Bullet::BulletDisappearance(int num)
+void Bullet::BulletDisappearance()
 {
-	if (BulletClone[num].Bulletpos_x >= 680.0f)
+	if (Bulletpos_x >= 680.0f)
 	{
-		BulletSpown[num] = false;
+		BulletSpown = false;
 	}
 }
 
@@ -423,11 +471,11 @@ void EnemySpownControl()
 {
 	for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
 	{
-		if (EnemySpown[EnemyNum] == false)
+		if (EnemyClone[EnemyNum].EnemySpown == false)
 		{
 			EnemyClone[EnemyNum].Enemypos_x = 650.0f;
 			EnemyClone[EnemyNum].Enemypos_y = rand() % 260 + 100;
-			EnemySpown[EnemyNum] = true;
+			EnemyClone[EnemyNum].EnemySpown = true;
 			break;
 		}
 	}
@@ -437,32 +485,35 @@ void EnemySpownControl()
 void Enemy::EnemyMove(int num)
 {
 	
-	EnemyClone[num].Theta += ThetaSpeed;
-	if (EnemyClone[num].Theta > 360)
+	Theta += ThetaSpeed;
+	if (Theta > 360)
 	{
-		EnemyClone[num].Theta = 0;
+		Theta = 0;
 	}
-
-	EnemyClone[num].Enemypos_x -= sinf(EnemyClone[num].Theta * M_PI/180) * 4;
-	EnemyClone[num].Enemypos_y -= cosf(EnemyClone[num].Theta * M_PI/180) * 4;
-//	if (EnemyClone[num].Theta >= 45 && EnemyClone[num].Theta <= 135)
-//	{
-		EnemyClone[num].Enemypos_x -= 2.0f;
-//	}
+	if (num % 2 == 0)
+	{
+		Enemypos_x -= sinf(Theta * M_PI / 180) * 4;
+		Enemypos_y -= cosf(Theta * M_PI / 180) * 4;
+		Enemypos_x -= 2.0f;
+	}
+	else
+	{
+		Enemypos_x -= (num % 3 + 3);
+ 	}
 }
 
 //敵の消滅
 void Enemy::EnemyDisappearance(int num)
 {
-	if (EnemyClone[num].Enemypos_x <= -60.0f ||
+	if (Enemypos_x <= -90.0f ||
 		Contact_Player_Enemy(num) == true)
 	{
-		EnemySpown[num] = false;
+		EnemySpown = false;
 	}
 	else if (Contact_Bullet_Enemy(num) == true)
 	{
 		DestroyEnemy++;
-		EnemySpown[num] = false;
+		EnemySpown = false;
 	}
 }
 
@@ -494,7 +545,7 @@ bool Contact_Bullet_Enemy(int num)
 	for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
 	{
 		if (
-			BulletSpown[BulletNum] == true
+			BulletClone[BulletNum].BulletSpown == true
 			&&
 			((BulletClone[BulletNum].Bulletpos_x + 9.0f >= EnemyClone[num].Enemypos_x &&
 			  BulletClone[BulletNum].Bulletpos_x + 9.0f <= EnemyClone[num].Enemypos_x + 90.5f) ||
@@ -507,7 +558,20 @@ bool Contact_Bullet_Enemy(int num)
 			  BulletClone[BulletNum].Bulletpos_y        <= EnemyClone[num].Enemypos_y + 21.0f))
 			)
 		{
-			BulletSpown[BulletNum] = false;
+			BulletClone[BulletNum].BulletSpown = false;
+			for (int i = 0; i < 5; i++)
+			{
+				if (Explosion[i].ExplosionSpown == false)
+				{
+					Explosion[i].pos_x = EnemyClone[num].Enemypos_x - 10.5f;
+					Explosion[i].pos_y = EnemyClone[num].Enemypos_y;
+					Explosion[i].ExplosionSpown = true;
+					Explosion[i].EffectTime = 0;
+					break;
+				}
+			}
+
+
 			return true;
 		}
 	}
@@ -553,5 +617,101 @@ void BackGroundMove()
 		BackGround_grass_2 = 1024.0f;
 	}
 
+}
+
+//描画処理関数
+
+//プレイヤーアニメーション
+void PlayMove()
+{
+	int count = countUV % 30;
+	if (countUV < 10)
+	{
+		Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine");
+	}
+	else if (count >= 10 && count < 20)
+	{
+		Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine2");
+	}
+	else
+	{
+		Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine3");
+	}
+}
+
+//エネミーアニメーション
+void EnemyMove(int num)
+{
+	int count = countUV % 40;
+	if (count < 10)
+	{
+		Engine::DrawTexture(EnemyClone[num].Enemypos_x, EnemyClone[num].Enemypos_y, "Enemy", 255, 0.0f, 1.5f, 1.5f);
+	}
+	else if (count >= 10 && count < 20)
+	{
+		Engine::DrawTexture(EnemyClone[num].Enemypos_x, EnemyClone[num].Enemypos_y, "Enemy2", 255, 0.0f, 1.5f, 1.5f);
+	}
+	else if (count >= 20 && count < 30)
+	{
+		Engine::DrawTexture(EnemyClone[num].Enemypos_x, EnemyClone[num].Enemypos_y, "Enemy3", 255, 0.0f, 1.5f, 1.5f);
+	}
+	else
+	{
+		Engine::DrawTexture(EnemyClone[num].Enemypos_x, EnemyClone[num].Enemypos_y, "Enemy4", 255, 0.0f, 1.5f, 1.5f);
+	}
+}
+
+//爆発エフェクト
+void explosionMove(int x, int y, int num)
+{
+	if (Explosion[num].ExplosionSpown == true)
+	{
+		Explosion[num].EffectTime++;
+		int count = Explosion[num].EffectTime;
+		if (count < 5)
+		{
+			Engine::DrawTexture(x, y, "explosion1");
+		}
+		else if (count >= 5 && count < 10)
+		{
+			Engine::DrawTexture(x, y, "explosion2");
+		}
+		else if (count >= 10 && count < 15)
+		{
+			Engine::DrawTexture(x, y, "explosion3");
+		}
+		else if (count >= 15 && count < 20)
+		{
+			Engine::DrawTexture(x, y, "explosion4");
+		}
+		else if (count >= 20 && count < 25)
+		{
+			Engine::DrawTexture(x, y, "explosion5");
+		}
+		else if (count >= 25 && count < 30)
+		{
+			Engine::DrawTexture(x, y, "explosion6");
+		}
+		else if (count >= 30 && count < 35)
+		{
+			Engine::DrawTexture(x, y, "explosion7");
+		}
+		else if (count >= 35 && count < 40)
+		{
+			Engine::DrawTexture(x, y, "explosion8");
+		}
+		else if (count >= 40 && count < 45)
+		{
+			Engine::DrawTexture(x, y, "explosion9");
+		}
+		else if (count >= 45 && count < 50)
+		{
+			Engine::DrawTexture(x, y, "explosion10");
+		}
+		else if (count >= 50 && count < 55)
+		{
+			Engine::DrawTexture(x, y, "explosion11");
+		}
+	}
 }
 
