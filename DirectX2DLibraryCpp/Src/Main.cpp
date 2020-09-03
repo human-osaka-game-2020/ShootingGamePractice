@@ -21,7 +21,7 @@ int WINAPI WinMain(
 {
 	// エンジンの初期化
 	// ゲームループ開始前に1度だけ実行する
-	if (Engine::Initialize(640, 480, "Sample") == false)
+	if (Engine::Initialize(1920, 1080, "Sample") == false)
 	{
 		return 0;
 	}
