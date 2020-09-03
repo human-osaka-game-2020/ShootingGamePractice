@@ -34,6 +34,8 @@ Player player;
 Enemy enemy;
 class Bullet bullet[BULLET_MAX];
 
+float BGpos_y = 0.0f;
+
 double startTime = clock() / CLOCKS_PER_SEC;
 
 
@@ -114,6 +116,17 @@ void DrawProcessing()
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 
+	// 背景の描画
+	Engine::LoadTexture("BackGround", "Res/BackGround.png");
+	Engine::DrawTexture(0.0f, BGpos_y, "BackGround", UCHAR_MAX, 0.0f, 0.63f, 1.0f);
+	BGpos_y++;
+	if (BGpos_y >= 0) {
+		Engine::DrawTexture(0.0f, BGpos_y - 480, "BackGround", UCHAR_MAX, 0.0f, 0.63f, 1.0f);
+	}
+	if (BGpos_y - 480 >= 0) {
+		BGpos_y = 0;
+	}
+
 	// プレイヤーの描画
 	Engine::LoadTexture("Player", "Res/Player.png");
 	if (player.isLive == true) {
@@ -163,7 +176,7 @@ void DrawProcessing()
 
 	// 敵とプレイヤーの距離
 	char aaaa[20];
-	snprintf(aaaa, 20, "%.2f", enemy.playerDistance);
+	snprintf(aaaa, 20, "%.2f", bullet[0].enemyDistance);
 	puts(aaaa);
 	Engine::DrawFont(0.0f, 50.0f, aaaa, Regular, Red);
 
