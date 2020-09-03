@@ -5,10 +5,23 @@
 #include "Engine/Engine.h"
 #include "Common/Vec.h"
 
-Vec2 g_Position = Vec2(0.0f, 240.0f);
+Vec2 Player_Pos = Vec2(0.0f, 240.0f);
+Vec2 Enemy1_Pos = Vec2(610.0f, 240.0f);
+Vec2 Enemy2_Pos = Vec2(610.0f, 240.0f);
+Vec2 Enemy3_Pos = Vec2(610.0f, 240.0f);
 Vec2 g_Scale = Vec2(1.0f, 1.0f);
 float g_Angle = 0.0f;
 int g_PivotType = PivotType::LeftTop;
+float EnemyTimer = 0.0f;
+float Timer = 0.0f;
+int EnemyCount = 0;
+int Enemy[10];
+float speed = 2.0f;
+float BackGround_1 = 0.0f;
+float BackGround_2 = 1536.0f;
+bool Spawn1 = false;
+bool Spawn2 = false;
+bool Spawn3 = false;
 
 // ゲーム処理
 void GameProcessing();
@@ -36,6 +49,7 @@ int WINAPI WinMain(
 	// 描画や取得は登録した文字列で指定する
 	Engine::LoadTexture("RMAKE1", "Res/RMAKE1.png");
 	Engine::LoadTexture("Enemy1", "Res/Enemy1.png");
+	Engine::LoadTexture("Haikei", "Res/Haikei.jpg");
 
 	// サウンド読み込み
 	// 第一引数の文字列で読み込んだサウンドを登録する
@@ -88,26 +102,24 @@ void GameProcessing()
 	// 入力データの更新
 	Engine::Update();
 
-	float speed = 2.0f;
-
 	g_Angle += 1.0f;
 
 	// キーボードの入力取得
-	if (Engine::IsKeyboardKeyHeld(DIK_LEFT) == true && g_Position.X > 0)
+	if (Engine::IsKeyboardKeyHeld(DIK_LEFT) == true && Player_Pos.X > 0)
 	{
-		g_Position.X -= speed;
+		Player_Pos.X -= speed;
 	}
-	else if (Engine::IsKeyboardKeyHeld(DIK_RIGHT) == true && g_Position.X < 610)
+	else if (Engine::IsKeyboardKeyHeld(DIK_RIGHT) == true && Player_Pos.X < 610)
 	{
-		g_Position.X += speed;
+		Player_Pos.X += speed;
 	}
-	if (Engine::IsKeyboardKeyHeld(DIK_UP) == true && g_Position.Y > 30)
+	if (Engine::IsKeyboardKeyHeld(DIK_UP) == true && Player_Pos.Y > 30)
 	{
-		g_Position.Y -= speed;
+		Player_Pos.Y -= speed;
 	}
-	else if (Engine::IsKeyboardKeyHeld(DIK_DOWN) == true && g_Position.Y < 480)
+	else if (Engine::IsKeyboardKeyHeld(DIK_DOWN) == true && Player_Pos.Y < 480)
 	{
-		g_Position.Y += speed;
+		Player_Pos.Y += speed;
 	}
 
 	// 軸の切り替え
@@ -148,14 +160,66 @@ void DrawProcessing()
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 
+	EnemyTimer = timeGetTime();
+	Timer = timeGetTime();
+
 	// テクスチャ描画
 	// キーワードで指定されたテクスチャを描画する
 	// DrawTextureはテクスチャをそのまま描画する
 	// 一部切り取って描画する場合はDrawTextureUVを使用する
 	Engine::SetPivotType(PivotType::LeftTop);
-	Engine::DrawTexture(g_Position.X, g_Position.Y, "RMAKE1", 500, -90.0f, 0.5f, 0.5f);
-	Engine::DrawTexture(g_Position.X, g_Position.Y, "Enemy1", 500, -90.0f, 0.5f, 0.5f);
 
+	Engine::DrawTexture(BackGround_1, 0.0f, "Haikei", 255, 0.0f, 1.5f, 1.5f);
+	Engine::DrawTexture(BackGround_2, 0.0f, "Haikei", 255, 0.0f, 1.5f, 1.5f);
+	
+	Engine::DrawTexture(Player_Pos.X, Player_Pos.Y, "RMAKE1", 500, -90.0f, 0.5f, 0.5f);
+
+	if (EnemyTimer >= 2.0f)
+	{
+		srand(unsigned(timeGetTime()));
+		EnemyCount += 1;
+		if (EnemyCount == 1 || Spawn1 == true)
+		{
+			Engine::DrawTexture(Enemy1_Pos.X, Enemy1_Pos.Y, "Enemy1", 500, -90.0f, 0.5f, 0.5f);
+			Spawn1 = true;
+		}
+		if(EnemyCount == 2 || Spawn2 == true)
+		{
+			Engine::DrawTexture(Enemy2_Pos.X, Enemy2_Pos.Y, "Enemy1", 500, -90.0f, 0.5f, 0.5f);
+			Spawn2 = true;
+		}
+		if(EnemyCount == 3 || Spawn3 == true)
+		{
+			Engine::DrawTexture(Enemy3_Pos.X, Enemy3_Pos.Y, "Enemy1", 500, -90.0f, 0.5f, 0.5f);
+			Spawn3 = true;
+		}
+		EnemyTimer = 0.0f;
+	}
+	bool up = true;
+	Enemy1_Pos.X -= speed;
+	Enemy2_Pos.X -= 1.5f;
+	if (Timer >= 1.5f && up == true)
+	{
+			up = false;
+			Enemy2_Pos.Y += 2.0f;
+	}
+	if(Timer >= 1.5f && up == false)
+	{
+			up = true;
+			Enemy2_Pos.Y -= 2.0f;
+	}
+	
+
+	BackGround_1 -= 0.5f;
+	if (BackGround_1 <= -1536.0f)
+	{
+		BackGround_1 = 1536.0f;
+	}
+	BackGround_2 -= 0.5f;
+	if (BackGround_2 <= -1536.0f)
+	{
+		BackGround_2 = 1536.0f;
+	}
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
 	Engine::FinishDrawing();
