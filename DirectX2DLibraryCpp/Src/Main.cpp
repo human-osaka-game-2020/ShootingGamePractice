@@ -28,10 +28,10 @@ void HitProcessing();
 
 
 const int BULLET_MAX = 3;
-
+const int ENEMY_MAX = 15;
 
 Player player;
-Enemy enemy;
+class Enemy enemy[ENEMY_MAX];
 class Bullet bullet[BULLET_MAX];
 
 float BGpos_y = 0.0f;
@@ -119,7 +119,7 @@ void DrawProcessing()
 	// 背景の描画
 	Engine::LoadTexture("BackGround", "Res/BackGround.png");
 	Engine::DrawTexture(0.0f, BGpos_y, "BackGround", UCHAR_MAX, 0.0f, 0.63f, 1.0f);
-	BGpos_y++;
+	BGpos_y += 0.5f;
 	if (BGpos_y >= 0) {
 		Engine::DrawTexture(0.0f, BGpos_y - 480, "BackGround", UCHAR_MAX, 0.0f, 0.63f, 1.0f);
 	}
@@ -136,13 +136,12 @@ void DrawProcessing()
 		Engine::DrawTexture(player.pos_x, player.pos_y, "Player", 0.0f, 0.0f, player.textureScaling, player.textureScaling);
 	}
 
-	// 敵の描画 ３秒ごとに出現、消滅する
+	// 敵の描画
 	Engine::LoadTexture("Enemy", "Res/Enemy.png");
-	if (enemy.isLive == true) {
-		Engine::DrawTexture(enemy.pos_x, enemy.pos_y, "Enemy", UCHAR_MAX, 0.0f, enemy.textureScaling, enemy.textureScaling);
-	}
-	else {
-		Engine::DrawTexture(enemy.pos_x, enemy.pos_y, "Enemy", 0.0f, 0.0f, enemy.textureScaling, enemy.textureScaling);
+	for (int i = 0; i < ENEMY_MAX; i++) {
+		if (enemy[i].isLive == true) {
+			Engine::DrawTexture(enemy[i].pos_x, enemy[i].pos_y, "Enemy", UCHAR_MAX, 0.0f, enemy[i].textureScaling, enemy[i].textureScaling);
+		}
 	}
 
 	// 弾の表示
@@ -303,28 +302,30 @@ void ToggleFireMode() {
 
 void HitProcessing() {
 
-	// いろいろ計算
 	player.calcPosCenter();
-	enemy.calcPosCenter();
-	for (int i = 0; i < BULLET_MAX; i++) {
-		bullet[i].calcPosCenter();
+
+	// プレイヤーと敵の当たり判定
+	for (int i = 0; i < ENEMY_MAX; i++) {
+		if (enemy[i].isLive == true) {
+			enemy[i].calcPosCenter();
+			enemy[i].playerDistance = sqrt(pow(player.posCenter_x - enemy[i].posCenter_x, 2.0f) + pow(player.posCenter_y - enemy[i].posCenter_y, 2.0f));
+			if (enemy[i].isLive == true && player.isLive == true && enemy[i].playerDistance < (player.hitBox + enemy[i].hitBox)) {
+				player.isLive = false;
+			}
+		}
 	}
 
-	// 敵とプレイヤーの距離
-	enemy.playerDistance = sqrt(pow(player.posCenter_x - enemy.posCenter_x, 2.0f) + pow(player.posCenter_y - enemy.posCenter_y, 2.0f));
-	// 敵と弾の距離
+	// 敵とプレイヤーの弾の当たり判定
 	for (int i = 0; i < BULLET_MAX; i++) {
-		bullet[i].enemyDistance = sqrt(pow(bullet[i].posCenter_x - enemy.posCenter_x, 2.0f) + pow(bullet[i].posCenter_y - enemy.posCenter_y, 2.0f));
-	}
-
-	// 当たったかどうか
-	if (enemy.isLive == true && player.isLive == true && enemy.playerDistance < (player.hitBox + enemy.hitBox)) {
-		player.isLive = false;
-	}
-
-	for (int i = 0; i < BULLET_MAX; i++) {
-		if (bullet[i].isFired == true && enemy.isLive == true && bullet[i].enemyDistance < (bullet[i].hitBox + enemy.hitBox)) {
-			enemy.isLive = false;
+		if (bullet[i].isFired == true) {
+			bullet[i].calcPosCenter();
+			for (int j = 0; j < ENEMY_MAX; j++) {
+				bullet[i].enemyDistance = sqrt(pow(bullet[i].posCenter_x - enemy[j].posCenter_x, 2.0f) + pow(bullet[i].posCenter_y - enemy[j].posCenter_y, 2.0f));
+				if (bullet[i].isFired == true && enemy[j].isLive == true && bullet[i].enemyDistance < (bullet[i].hitBox + enemy[j].hitBox)) {
+					enemy[j].isLive = false;
+					bullet[i].isFired = false;
+				}
+			}
 		}
 	}
 

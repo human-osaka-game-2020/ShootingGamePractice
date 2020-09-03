@@ -13,7 +13,7 @@ class Enemy {
 public:
 	float pos_x = WINDOW_WIDTH / 2 - 25; // 座標X
 	float posCenter_x = 0.0f; // 画像の中心の座標X
-	float pos_y = WINDOW_HEIGHT / 3; // 座標Y
+	float pos_y = 0; // 座標Y
 	float posCenter_y = 0.0f; // 画像の中心の座標Y
 	float hitBox = 20.0f; // 当たり判定
 	float playerDistance = 0.0f; // プレイヤーまでの距離

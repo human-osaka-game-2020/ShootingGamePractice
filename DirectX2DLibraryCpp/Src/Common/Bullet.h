@@ -15,7 +15,7 @@ public:
 	float posCenter_x = 0.0f; // 画像の中心の座標X
 	float pos_y = 0; // 座標Y
 	float posCenter_y = 0.0f; // 画像の中心の座標Y
-	float hitBox = 1.0f; // 当たり判定
+	float hitBox = 8.0f; // 当たり判定
 	float enemyDistance = 0.0f; // 敵までの距離
 
 	float textureCenterX = 0.0f; // 画像の中心X
