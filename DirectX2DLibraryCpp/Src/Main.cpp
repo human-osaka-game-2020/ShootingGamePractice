@@ -67,10 +67,10 @@ public:
 	bool ExplosionSpown = false;
 
 };
-explosion Explosion[5];
+explosion Explosion[EnemyStock];
 
 int Timer;			//制限時間の記録
-char c_Timer[10];
+char c_Timer[7];
 
 enum phase
 {
@@ -250,7 +250,7 @@ void GameProcessing()
 		{
 			EnemySpownControl();
 			FlameCount_Enemy = 0;
-			EnemyReSpownTime = rand() % 50 + 50;
+			EnemyReSpownTime = rand() % 50 + 20;
 		}
 		for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
 		{
@@ -292,6 +292,7 @@ void GameProcessing()
 		}
 		break;
 	case result:
+		sprintf_s(c_DestroyEnemy, 4, "%d", DestroyEnemy);
 		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
 		{
 			Phase = title;
@@ -319,6 +320,12 @@ void DrawProcessing()
 	switch (Phase)
 	{
 	case title:
+		Engine::DrawFont(24.0f, 440.0f, "↑", FontSize::Regular, FontColor::Black);
+		Engine::DrawFont(0.0f, 450.0f, "←↓→で移動,", FontSize::Regular, FontColor::Black);
+		Engine::DrawFont(150.0f, 450.0f, "SPACEで弾を発射", FontSize::Regular, FontColor::Black);
+
+
+
 		Engine::DrawFont(190.0f, 100.0f, "SHOOTING-GAME", FontSize::Large, FontColor::Black);
 		Engine::DrawFont(170.0f, 300.0f, "ENTERを押してSTART", FontSize::Large, FontColor::Black);
 		break;
@@ -653,7 +660,7 @@ void BackGroundMove()
 void PlayMove()
 {
 	int count = Timer % 30;
-	if (Timer < 10)
+	if (count < 10)
 	{
 		Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine");
 	}
