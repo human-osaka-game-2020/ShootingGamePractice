@@ -28,6 +28,13 @@ void GameProcessing();
 // 描画処理
 void DrawProcessing();
 
+typedef struct
+{
+	float m_PosX;		// X座標
+	float m_PosY;		// Y座標
+	float m_Radius;		// 半径
+} Circle;
+
 /*
 	エントリポイント
 */
@@ -152,6 +159,25 @@ void GameProcessing()
 	{
 		is_add = !is_add;
 	}
+	
+	Circle circle1 = {
+		Player_Pos.X,
+		Player_Pos.Y,
+		16.0f
+	};
+
+	// 円２の情報
+	Circle circle2 = {
+		Enemy1_Pos.X,
+		Enemy1_Pos.Y,
+		16.0f,
+	};
+
+	/*if (OnCollisionCircle(circle1, circle2) == true)
+	{
+
+	}
+	*/
 }
 
 void DrawProcessing()
@@ -223,4 +249,17 @@ void DrawProcessing()
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
 	Engine::FinishDrawing();
+}
+bool OnCollisionCircle(Circle circle1, Circle circle2)
+{
+	float a = circle1.m_PosX - circle2.m_PosX;
+	float b = circle1.m_PosY - circle2.m_PosY;
+	float c = sqrt(a * a + b * b);
+	float sum_radius = circle1.m_Radius + circle2.m_Radius;
+
+	if (c <= sum_radius)
+	{
+		return true;
+	}
+	return false;
 }
