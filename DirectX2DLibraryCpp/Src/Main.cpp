@@ -25,10 +25,14 @@ void BulletMove();
 void ToggleFireMode();
 // 当たり判定の処理
 void HitProcessing();
+// 敵の移動方法の管理
+void EnemyController();
+// 敵の移動処理
+void EnemyMoving();
 
 
 const int BULLET_MAX = 3;
-const int ENEMY_MAX = 15;
+const int ENEMY_MAX = 2;
 
 Player player;
 class Enemy enemy[ENEMY_MAX];
@@ -97,6 +101,8 @@ int WINAPI WinMain(
 // メイン処理
 void GameProcessing()
 {
+	EnemyController();
+
 	// 入力データの更新
 	Engine::Update();
 
@@ -106,6 +112,7 @@ void GameProcessing()
 		BulletMove();
 		ToggleFireMode();
 		HitProcessing();
+		EnemyMoving();
 	}
 
 }
@@ -154,30 +161,32 @@ void DrawProcessing()
 
 	// 射撃モードの表示
 	if (player.threeWayMode == true) {
-		Engine::DrawFont(280.0f, 0.0f, "3 Way Mode", Regular, Red);
+		Engine::DrawFont(0.0f, 0.0f, "3 Way Mode", Regular, Red);
 	}
 	else {
-		Engine::DrawFont(280.0f, 0.0f, "Normal Mode", Regular, Red);
+		Engine::DrawFont(0.0f, 0.0f, "Normal Mode", Regular, Red);
 	}
 
-	// X座標とY座標の表示
-	char buf_x[10];
-	char buf_y[10];
-	char printPos[30];
 
-	snprintf(buf_x, 10, "%.2f", player.pos_x);
-	puts(buf_x);
-	snprintf(buf_y, 10, "%.2f", player.pos_y);
-	puts(buf_y);
+	// デバッグ情報
+	//// X座標とY座標の表示
+	//char buf_x[10];
+	//char buf_y[10];
+	//char printPos[30];
 
-	sprintf_s(printPos, "X:%s - Y:%s", buf_x, buf_y);
-	Engine::DrawFont(0.0f, 0.0f, printPos, Regular, Red);
+	//snprintf(buf_x, 10, "%.2f", player.pos_x);
+	//puts(buf_x);
+	//snprintf(buf_y, 10, "%.2f", player.pos_y);
+	//puts(buf_y);
 
-	// 敵とプレイヤーの距離
-	char aaaa[20];
-	snprintf(aaaa, 20, "%.2f", bullet[0].enemyDistance);
-	puts(aaaa);
-	Engine::DrawFont(0.0f, 50.0f, aaaa, Regular, Red);
+	//sprintf_s(printPos, "X:%s - Y:%s", buf_x, buf_y);
+	//Engine::DrawFont(0.0f, 0.0f, printPos, Regular, Red);
+
+	//// 敵とプレイヤーの距離
+	//char aaaa[20];
+	//snprintf(aaaa, 20, "%.2f", bullet[0].enemyDistance);
+	//puts(aaaa);
+	//Engine::DrawFont(0.0f, 50.0f, aaaa, Regular, Red);
 
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
@@ -329,4 +338,18 @@ void HitProcessing() {
 		}
 	}
 
+}
+
+void EnemyController() {
+	for (int i = 0; i < ENEMY_MAX; i++) {
+		if (i % 2 == 0) {
+			enemy[i].movingMode = Sway;
+		}
+	}
+}
+
+void EnemyMoving() {
+	for (int i = 0; i < ENEMY_MAX; i++) {
+		enemy[i].EnemyMovingSwitch();
+	}
 }
