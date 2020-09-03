@@ -69,12 +69,14 @@ public:
 };
 explosion Explosion[5];
 
-int countUV;
+int Timer;			//制限時間の記録
+char c_Timer[10];
 
 enum phase
 {
 	title,
 	battle,
+	gameover,
 	result
 };
 phase Phase = title;
@@ -206,6 +208,7 @@ void GameProcessing()
 			Playerpos_y = 210.0f;
 			NoDamageTimeCount = NoDamageTime;
 			DestroyEnemy = 0;
+			Timer = 0;
 			initialize = true;
 		}
 		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
@@ -214,6 +217,9 @@ void GameProcessing()
 		}
 		break;
 	case battle:
+
+		Timer++;
+
 		PlayerMachineMove();
 
 		BackGroundMove();
@@ -257,7 +263,7 @@ void GameProcessing()
 					HpDecrease();
 					if (HpCount[0] == false)
 					{
-						Phase = result;
+						Phase = gameover;
 						initialize = false;
 					}
 				}
@@ -270,11 +276,20 @@ void GameProcessing()
 		{
 			sprintf_s(c_DestroyEnemy, 4, "%d", DestroyEnemy);
 		}
-		else
+
+		sprintf_s(c_Timer, 4, "%d",100 - Timer / 60);
+		if (100 - Timer / 60 <= 0)
 		{
-			DestroyEnemy = 100;
+			Phase = result;
+			initialize = false;
 		}
 
+		break;
+	case gameover:
+		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
+		{
+			Phase = title;
+		}
 		break;
 	case result:
 		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
@@ -299,8 +314,7 @@ void DrawProcessing()
 
 	Engine::DrawTexture(BackGround_grass_1, 400.0f, "grass");
 	Engine::DrawTexture(BackGround_grass_2, 400.0f, "grass");
-
-	countUV++;
+	Engine::DrawTexture(0.0f, 0.0f, "UI", 255, 0.0f, 1.5f, 0.3f);
 
 	switch (Phase)
 	{
@@ -331,7 +345,14 @@ void DrawProcessing()
 
 		Engine::DrawTexture(0.0f, 0.0f, "UI", 255, 0.0f, 1.5f, 0.3f);
 
-
+		if (Timer < 5400)
+		{
+			Engine::DrawFont(300.0f, 0.0f, c_Timer, FontSize::Large, FontColor::Black);
+		}
+		else if (Timer > 5400)
+		{
+			Engine::DrawFont(300.0f, 0.0f, c_Timer, FontSize::Large, FontColor::Red);
+		}
 		Engine::DrawFont(0.0f, 5.0f, "HP：", FontSize::Large, FontColor::Black);
 		for (int HpNum = 0; HpNum < Hp_Max; HpNum++)
 		{
@@ -365,7 +386,7 @@ void DrawProcessing()
 		}
 
 		break;
-	case result:
+	case gameover:
 		Engine::DrawFont(0.0f, 0.0f, "HP：", FontSize::Large, FontColor::Black);
 		for (int HpNum = 0; HpNum < Hp_Max; HpNum++)
 		{
@@ -384,6 +405,13 @@ void DrawProcessing()
 		Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine");
 
 		Engine::DrawFont(250.0f, 200.0f, "GAMEOVER", FontSize::Large, FontColor::Black);
+		Engine::DrawFont(120.0f, 300.0f, "ENTERを押してTITLEへ戻る", FontSize::Large, FontColor::Black);
+		break;
+	case result:
+		Engine::DrawFont(350, 250.0f, c_DestroyEnemy, FontSize::Large, FontColor::Black);
+		Engine::DrawFont(300, 250.0f, "×", FontSize::Large, FontColor::Black);
+		Engine::DrawTexture(240, 260.0f, "Enemy");
+		Engine::DrawFont(250.0f, 200.0f, " TIMEUP ", FontSize::Large, FontColor::Black);
 		Engine::DrawFont(120.0f, 300.0f, "ENTERを押してTITLEへ戻る", FontSize::Large, FontColor::Black);
 		break;
 	}
@@ -624,8 +652,8 @@ void BackGroundMove()
 //プレイヤーアニメーション
 void PlayMove()
 {
-	int count = countUV % 30;
-	if (countUV < 10)
+	int count = Timer % 30;
+	if (Timer < 10)
 	{
 		Engine::DrawTexture(Playerpos_x, Playerpos_y, "PlayerMachine");
 	}
@@ -642,7 +670,7 @@ void PlayMove()
 //エネミーアニメーション
 void EnemyMove(int num)
 {
-	int count = countUV % 40;
+	int count = Timer % 40;
 	if (count < 10)
 	{
 		Engine::DrawTexture(EnemyClone[num].Enemypos_x, EnemyClone[num].Enemypos_y, "Enemy", 255, 0.0f, 1.5f, 1.5f);
