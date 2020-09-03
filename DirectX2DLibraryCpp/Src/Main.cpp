@@ -20,6 +20,8 @@ float Enemy_posx = 640.0f;			//エネミーの初期値;
 float Enemy_posy = 240.0f;
 float bullet_posx = 0;				//バレットの初期値
 float bullet_posy = 0;
+float background1_x = 0;				//背景の初期値
+float background2_x = 962;
 const int Enemys = 10;				//エネミーの数
 const int Bullets = 10;				//バレットの数
 bool Enemy_Contact = false;
@@ -58,6 +60,7 @@ void BulletClone();
 void BulletErase();
 void Enemy_Player_Contact();
 void Enemy_Bullet_Contact();
+void BackGround_move();
 
 /*
 	エントリポイント
@@ -79,6 +82,8 @@ int WINAPI WinMain(
 	Engine::LoadTexture("PlayerMachine", "Res/Robot.PNG");	//ロボットの画像読み込み
 	Engine::LoadTexture("Enemy", "Res/EA1.PNG");			//エネミー
 	Engine::LoadTexture("Bullet", "Res/Bullet1.PNG");		//バレット
+	Engine::LoadTexture("BG1", "Res/side01.jpg");			//背景
+	Engine::LoadTexture("BG2", "Res/side02.jpg");
 
 	srand((unsigned)time(NULL));
 
@@ -139,6 +144,7 @@ void GameProcessing()
 	BulletErase();
 	Enemy_Player_Contact();
 	Enemy_Bullet_Contact();
+	BackGround_move();
 	for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++) 
 	{
 		enemy[EnemyNUM].EnemyCount++;
@@ -158,16 +164,20 @@ void DrawProcessing()
 	// 描画開始
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
-
+	//背景描画
+	Engine::DrawTexture(background1_x, 0, "BG1", 255, 0.0, 0.47, 0.47);
+	Engine::DrawTexture(background2_x, 0, "BG2", 255, 0.0, 0.47, 0.47);
+	//プレイヤー描画
 	Engine::DrawTexture(player_posx, player_posy, "PlayerMachine");
-	for (int BulletNUM=0;BulletNUM<Bullets;BulletNUM++)//半径18前後
+	//バレット描画
+	for (int BulletNUM=0;BulletNUM<Bullets;BulletNUM++)
 	{
 		if (bulletAppearance[BulletNUM] == true)
 		{
 			Engine::DrawTexture(bullet[BulletNUM].bullet_posx, bullet[BulletNUM].bullet_posy, "Bullet");
 		}
 	}
-	
+	//エネミー描画
 	for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++)
 	{
 		if (EnemyAppearance[EnemyNUM] == true)
@@ -313,5 +323,19 @@ void Enemy_Bullet_Contact()
 				bulletAppearance[BulletNUM] = false;
 			}
 		}
+	}
+}
+
+void BackGround_move()
+{
+	background1_x -= 2.5;
+	background2_x -= 2.5;
+	if (background1_x < -962)
+	{
+		background1_x = 962;
+	}
+	if (background2_x < -962)
+	{
+		background2_x = 962;
 	}
 }
