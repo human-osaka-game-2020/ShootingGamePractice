@@ -39,14 +39,16 @@ void DrawProcessing();
 		return 0;
 	}
 
+	// テクスチャ読み込み
+	Engine::LoadTexture("player", "Res/Robot.png");
+
+
 	while (true)
 	{
 		bool message_ret = false;
 		MSG msg;
 
-		// テクスチャ読み込み
-		Engine::LoadTexture("player", "Robot_idle 1.png");
-
+		
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			if (msg.message == WM_QUIT)
@@ -81,39 +83,34 @@ void DrawProcessing();
 
 } // プログラム終了
 
-	void player()
+void player()
+{
+	// 入力データの更新
+	Engine::Update();
+	if (Engine::IsKeyboardKeyHeld(DIK_LEFT) == true)
 	{
-		// 入力データの更新
-		Engine::Update();
-		if (Engine::IsKeyboardKeyHeld(DIK_LEFT) == true)
-		{
-			P_Position.X -= playerspeed;
-		}
-		
-		else if (Engine::IsKeyboardKeyPushed(DIK_UPARROW) == true)
-		{
-			P_Position.X += playerspeed;
-		}
-
-		else if (Engine::IsKeyboardKeyHeld(DIK_LEFTARROW) == true)
-		{
-			P_Position.Y -= playerspeed;
-		}
-
-		else if (Engine::IsKeyboardKeyReleased(DIK_RIGHTARROW) == true)
-		{
-			P_Position.Y += playerspeed;
-		}
+		P_Position.X -= playerspeed;
+	}
+	
+	else if (Engine::IsKeyboardKeyHeld(DIK_RIGHTARROW) == true)
+	{
+		P_Position.X += playerspeed;
+	}
+	else if (Engine::IsKeyboardKeyHeld(DIK_UPARROW) == true)
+	{
+		P_Position.Y -= playerspeed;
 	}
 
-	void DrawPlayer()
+	else if (Engine::IsKeyboardKeyHeld(DIK_DOWNARROW) == true)
 	{
-		Engine::DrawTexture(P_Position.X, P_Position.Y, "player", 500, 0.0f, 1.0f, 1.0f);
+		P_Position.Y += playerspeed;
 	}
+}
 
-
-
-
+void DrawPlayer()
+{
+	Engine::DrawTexture(P_Position.X, P_Position.Y, "player", 255, 0.0f, 1.0f, 1.0f);
+}
 
 void GameProcessing()
 {
@@ -130,10 +127,12 @@ void DrawProcessing()
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 
+	DrawPlayer();
 
 
 	// 描画終了
-	// 描画処理を終了する場合、必ず最後に実行する
+		// 描画処理を終了する場合、必ず最後に実行する
 	Engine::FinishDrawing();
+	
 }
 
