@@ -11,7 +11,7 @@
 
 // 移動方法の列挙
 enum MovingMode {
-	Forward = 1,
+	Forward,
 	Sway,
 	Around
 };
@@ -35,10 +35,28 @@ public:
 	float textureScaling = 3.0f; // 画像の拡大率
 
 	bool swayTemp = false; // MoveSwayのために
-	bool isLive = true; // 生きているかどうか
+	bool isLive = false; // 生きているかどうか
 	bool isHitting = false; // 弾に当たっているかどうか
+	int destroyScore = 10; // 倒された時に加算するスコアの量
 
 public:
+
+	void Reset() {
+		isLive = false;
+		isHitting = false;
+		pos_x = rand() % 580;
+		pos_y = 0;
+		switch (rand() % 3)
+		{
+		default:
+		case 0:movingMode = Forward;
+			break;
+		case 1:movingMode = Sway;
+			break;
+		case 2:movingMode = Around;
+			break;
+		}
+	}
 	
 	// 画像の中心とそれを中心にした座標の算出
 	void calcPosCenter() {
@@ -81,25 +99,44 @@ public:
 
 	// 円運動をしながら下に動く
 	void MoveAround() {
-
+		pos_y += moveSpeed;
 	}
 
-	// 移動
+	// 移動,スコア調整
 	void EnemyMovingSwitch() {
 		switch (movingMode)
 		{
 		case Forward:
 			MoveForward();
+			destroyScore = 10;
 			break;
 		case Sway:
 			MoveSway();
+			destroyScore = 20;
 			break;
 		case Around:
 			MoveAround();
+			destroyScore = 30;
 			break;
 		default:
 			break;
 		}
+	}
+
+	// 画面外判定
+	bool WindowOut(){
+		if (posCenter_x <= 0 || posCenter_x >= WINDOW_WIDTH ||
+			posCenter_y <= -50 || posCenter_y >= WINDOW_HEIGHT) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	// インクリメント
+	Enemy() {
+		srand((unsigned)time(NULL));
 	}
 };
 

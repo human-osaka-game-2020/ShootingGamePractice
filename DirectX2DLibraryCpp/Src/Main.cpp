@@ -29,19 +29,31 @@ void HitProcessing();
 void EnemyController();
 // 敵の移動処理
 void EnemyMoving();
+// リセット処理
+void ResetProcessing();
 
 
 const int BULLET_MAX = 3;
-const int ENEMY_MAX = 2;
+const int ENEMY_MAX = 20;
 
 Player player;
 class Enemy enemy[ENEMY_MAX];
 class Bullet bullet[BULLET_MAX];
 
+// 背景のY座標
 float BGpos_y = 0.0f;
 
 double startTime = clock() / CLOCKS_PER_SEC;
 
+int score = 0;
+
+int resetCount = 0;
+
+// 敵の出現する確率
+int spawnRate = 5;
+
+// 敵の数
+int enemyCount = 0;
 
 /*
 	エントリポイント
@@ -101,7 +113,6 @@ int WINAPI WinMain(
 // メイン処理
 void GameProcessing()
 {
-	EnemyController();
 
 	// 入力データの更新
 	Engine::Update();
@@ -113,6 +124,8 @@ void GameProcessing()
 		ToggleFireMode();
 		HitProcessing();
 		EnemyMoving();
+		ResetProcessing();
+		EnemyController();
 	}
 
 }
@@ -160,12 +173,21 @@ void DrawProcessing()
 	}
 
 	// 射撃モードの表示
+	Engine::LoadTexture("SingleMode", "Res/BulletMode_Single.png");
+	Engine::LoadTexture("BurstMode", "Res/BulletMode_Burst.png");
 	if (player.threeWayMode == true) {
-		Engine::DrawFont(0.0f, 0.0f, "3 Way Mode", Regular, Red);
+		Engine::DrawTexture(10.0f, 10.0f, "BurstMode", UCHAR_MAX, 0.0f, 2.0f, 2.0f);
 	}
 	else {
-		Engine::DrawFont(0.0f, 0.0f, "Normal Mode", Regular, Red);
+		Engine::DrawTexture(10.0f, 10.0f, "SingleMode", UCHAR_MAX, 0.0f, 2.0f, 2.0f);
 	}
+
+	// スコアの表示
+	char buf_score[20];
+	// スコアを文字列に変更する
+	snprintf(buf_score, 20, "SCORE:%d", score);
+	puts(buf_score);
+	Engine::DrawFont(430.0f, 10.0f, buf_score, Large, White);
 
 
 	// デバッグ情報
@@ -311,11 +333,13 @@ void ToggleFireMode() {
 
 void HitProcessing() {
 
+	// プレイヤーの現在の位置を算出
 	player.calcPosCenter();
 
 	// プレイヤーと敵の当たり判定
 	for (int i = 0; i < ENEMY_MAX; i++) {
 		if (enemy[i].isLive == true) {
+			// 敵の現在の位置に基づいた当たり判定を算出
 			enemy[i].calcPosCenter();
 			enemy[i].playerDistance = sqrt(pow(player.posCenter_x - enemy[i].posCenter_x, 2.0f) + pow(player.posCenter_y - enemy[i].posCenter_y, 2.0f));
 			if (enemy[i].isLive == true && player.isLive == true && enemy[i].playerDistance < (player.hitBox + enemy[i].hitBox)) {
@@ -327,11 +351,14 @@ void HitProcessing() {
 	// 敵とプレイヤーの弾の当たり判定
 	for (int i = 0; i < BULLET_MAX; i++) {
 		if (bullet[i].isFired == true) {
+			// 弾の現在の位置に基づいた当たり判定を算出
 			bullet[i].calcPosCenter();
 			for (int j = 0; j < ENEMY_MAX; j++) {
 				bullet[i].enemyDistance = sqrt(pow(bullet[i].posCenter_x - enemy[j].posCenter_x, 2.0f) + pow(bullet[i].posCenter_y - enemy[j].posCenter_y, 2.0f));
 				if (bullet[i].isFired == true && enemy[j].isLive == true && bullet[i].enemyDistance < (bullet[i].hitBox + enemy[j].hitBox)) {
+					score += enemy[j].destroyScore;
 					enemy[j].isLive = false;
+					enemyCount--;
 					bullet[i].isFired = false;
 				}
 			}
@@ -341,9 +368,14 @@ void HitProcessing() {
 }
 
 void EnemyController() {
-	for (int i = 0; i < ENEMY_MAX; i++) {
-		if (i % 2 == 0) {
-			enemy[i].movingMode = Sway;
+	if (enemyCount < ENEMY_MAX) {
+		for (int i = 0; i < ENEMY_MAX; i++) {
+			if (enemy[i].isLive == false) {
+				enemy[i].Reset();
+				enemy[i].isLive = true;
+				enemyCount++;
+				return;
+			}
 		}
 	}
 }
@@ -351,5 +383,24 @@ void EnemyController() {
 void EnemyMoving() {
 	for (int i = 0; i < ENEMY_MAX; i++) {
 		enemy[i].EnemyMovingSwitch();
+	}
+}
+
+void ResetProcessing() {
+	if (Engine::IsKeyboardKeyHeld(DIK_R)) {
+		resetCount++;
+	}
+	else {
+		resetCount = 0;
+	}
+
+	if (resetCount > 120) {
+		resetCount = 0;
+		score = 0;
+		enemyCount = 0;
+		spawnRate = 5;
+		for (int i = 0; i < ENEMY_MAX; i++) {
+			enemy[i].Reset();
+		}
 	}
 }
