@@ -124,13 +124,10 @@ public:
 	}
 
 	// ‰æ–ÊŠO”»’è
-	bool WindowOut(){
+	void WindowOut(){
 		if (posCenter_x <= 0 || posCenter_x >= WINDOW_WIDTH ||
 			posCenter_y <= -50 || posCenter_y >= WINDOW_HEIGHT) {
-			return true;
-		}
-		else {
-			return false;
+			isLive = false;
 		}
 	}
 

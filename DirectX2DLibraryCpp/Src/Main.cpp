@@ -33,8 +33,13 @@ void EnemyMoving();
 void ResetProcessing();
 
 
-const int BULLET_MAX = 3;
-const int ENEMY_MAX = 20;
+const static int BULLET_MAX = 3;
+const static int ENEMY_MAX = 20;
+const static int SPAWNRATE_MAX = 500;
+const static int SPAWNRATE_MIN = 30;
+
+const static float ENEMYSPEED_MAX = 1.5f;
+const static float ENEMYSPEED_MIN = 0.5f;
 
 Player player;
 class Enemy enemy[ENEMY_MAX];
@@ -50,10 +55,12 @@ int score = 0;
 int resetCount = 0;
 
 // 敵の出現する確率
-int spawnRate = 5;
+int spawnRate = SPAWNRATE_MAX;
 
 // 敵の数
 int enemyCount = 0;
+
+float enemySpeed = ENEMYSPEED_MIN;
 
 /*
 	エントリポイント
@@ -124,9 +131,9 @@ void GameProcessing()
 		ToggleFireMode();
 		HitProcessing();
 		EnemyMoving();
-		ResetProcessing();
 		EnemyController();
 	}
+	ResetProcessing();
 
 }
 
@@ -139,7 +146,7 @@ void DrawProcessing()
 	// 背景の描画
 	Engine::LoadTexture("BackGround", "Res/BackGround.png");
 	Engine::DrawTexture(0.0f, BGpos_y, "BackGround", UCHAR_MAX, 0.0f, 0.63f, 1.0f);
-	BGpos_y += 0.5f;
+	BGpos_y += 0.2f;
 	if (BGpos_y >= 0) {
 		Engine::DrawTexture(0.0f, BGpos_y - 480, "BackGround", UCHAR_MAX, 0.0f, 0.63f, 1.0f);
 	}
@@ -359,22 +366,39 @@ void HitProcessing() {
 					score += enemy[j].destroyScore;
 					enemy[j].isLive = false;
 					enemyCount--;
+					if (spawnRate >= SPAWNRATE_MIN) {
+						spawnRate -= 10;
+					}
+
+					if (enemySpeed <= ENEMYSPEED_MAX) {
+						enemySpeed += 0.02f;
+					}
 					bullet[i].isFired = false;
 				}
 			}
 		}
 	}
 
+	// 敵が画面外に移動した場合は消滅させる
+	for (int i = 0; i < ENEMY_MAX; i++) {
+		if (enemy[i].isLive == true) {
+			enemy[i].WindowOut();
+			enemyCount--;
+		}
+	}
 }
 
 void EnemyController() {
-	if (enemyCount < ENEMY_MAX) {
-		for (int i = 0; i < ENEMY_MAX; i++) {
-			if (enemy[i].isLive == false) {
-				enemy[i].Reset();
-				enemy[i].isLive = true;
-				enemyCount++;
-				return;
+	if (rand() % spawnRate == 0) {
+		if (enemyCount < ENEMY_MAX) {
+			for (int i = 0; i < ENEMY_MAX; i++) {
+				if (enemy[i].isLive == false) {
+					enemy[i].Reset();
+					enemy[i].moveSpeed = enemySpeed;
+					enemy[i].isLive = true;
+					enemyCount++;
+					return;
+				}
 			}
 		}
 	}
@@ -398,9 +422,11 @@ void ResetProcessing() {
 		resetCount = 0;
 		score = 0;
 		enemyCount = 0;
-		spawnRate = 5;
+		spawnRate = SPAWNRATE_MAX;
 		for (int i = 0; i < ENEMY_MAX; i++) {
 			enemy[i].Reset();
+			enemy[i].moveSpeed = ENEMYSPEED_MIN;
 		}
+		player.Reset();
 	}
 }

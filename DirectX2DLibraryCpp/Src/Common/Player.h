@@ -40,6 +40,15 @@ public:
 		posCenter_y = pos_y + textureCenterY;
 	}
 
+	// ƒŠƒZƒbƒgˆ—
+	void Reset() {
+		pos_x = WINDOW_WIDTH / 2 - 25;
+		pos_y = WINDOW_HEIGHT - WINDOW_HEIGHT / 3;
+		isHitting = false;
+		isLive = true;
+		threeWayMode = false;
+	}
+
 };
 
 #endif
