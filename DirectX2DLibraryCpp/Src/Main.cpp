@@ -9,7 +9,7 @@
 Vec2 P_Position = Vec2(150.0f, 220.0f);
 
 // プレイヤーの基本の移動速度を宣言し、初期化する
-float playerspeed = 1.0f;
+float playerspeed = 3.0f;
 
 // プレイヤーの動きを変更するための関数を宣言する
 void player();
@@ -87,21 +87,21 @@ void player()
 {
 	// 入力データの更新
 	Engine::Update();
-	if (Engine::IsKeyboardKeyHeld(DIK_LEFT) == true)
+	if (Engine::IsKeyboardKeyHeld(DIK_A) == true)
 	{
 		P_Position.X -= playerspeed;
 	}
 	
-	else if (Engine::IsKeyboardKeyHeld(DIK_RIGHTARROW) == true)
+	else if (Engine::IsKeyboardKeyHeld(DIK_D) == true)
 	{
 		P_Position.X += playerspeed;
 	}
-	else if (Engine::IsKeyboardKeyHeld(DIK_UPARROW) == true)
+	else if (Engine::IsKeyboardKeyHeld(DIK_W) == true)
 	{
 		P_Position.Y -= playerspeed;
 	}
 
-	else if (Engine::IsKeyboardKeyHeld(DIK_DOWNARROW) == true)
+	else if (Engine::IsKeyboardKeyHeld(DIK_S) == true)
 	{
 		P_Position.Y += playerspeed;
 	}
@@ -109,7 +109,7 @@ void player()
 
 void DrawPlayer()
 {
-	Engine::DrawTexture(P_Position.X, P_Position.Y, "player", 255, 0.0f, 1.0f, 1.0f);
+	Engine::DrawTexture(P_Position.X, P_Position.Y, "player", 255, 0.0f, 2.0f, 2.0f);
 }
 
 void GameProcessing()
