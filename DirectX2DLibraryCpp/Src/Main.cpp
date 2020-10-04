@@ -31,6 +31,8 @@ void EnemyController();
 void EnemyMoving();
 // リセット処理
 void ResetProcessing();
+// バリアの処理
+void BarrierProcessing();
 
 
 const static int BULLET_MAX = 3;
@@ -61,6 +63,11 @@ int spawnRate = SPAWNRATE_MAX;
 int enemyCount = 0;
 
 float enemySpeed = ENEMYSPEED_MIN;
+
+// バリアのY軸
+float barrierLine[3] = { 420, 440, 460 };
+// バリアの壊された数
+int breakingBarrier = 0;
 
 /*
 	エントリポイント
@@ -132,6 +139,7 @@ void GameProcessing()
 		HitProcessing();
 		EnemyMoving();
 		EnemyController();
+		BarrierProcessing();
 	}
 	ResetProcessing();
 
@@ -196,6 +204,18 @@ void DrawProcessing()
 	puts(buf_score);
 	Engine::DrawFont(430.0f, 10.0f, buf_score, Large, White);
 
+	// バリアの表示
+	Engine::LoadTexture("Barrier", "Res/Barrier.png");
+	Engine::DrawTexture(0, barrierLine[0], "Barrier");
+	Engine::DrawTexture(0, barrierLine[1], "Barrier");
+	Engine::DrawTexture(0, barrierLine[2], "Barrier");
+
+	// ゲームオーバー画面の表示
+	if (player.isLive == false) {
+		Engine::LoadTexture("GameOverScreen", "Res/GameoverScreen.png");
+		Engine::DrawTexture(0, 0, "GameOverScreen", UCHAR_MAX * 0.95f, 0, 0.63f, 1);
+		Engine::DrawFont(240, 300, buf_score, Large, White);
+	}
 
 	// デバッグ情報
 	//// X座標とY座標の表示
@@ -428,5 +448,42 @@ void ResetProcessing() {
 			enemy[i].moveSpeed = ENEMYSPEED_MIN;
 		}
 		player.Reset();
+	}
+}
+
+void BarrierProcessing() {
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < ENEMY_MAX; j++) {
+			if (enemy[j].isLive == true && enemy[j].posCenter_y > barrierLine[i]) {
+				enemy[j].isLive = false;
+				enemyCount -= 1;
+				spawnRate *= 0.95f;
+				enemySpeed *= 0.95f;
+				breakingBarrier = i + 1;
+			}
+		}
+	}
+
+	switch (breakingBarrier)
+	{
+	case 1:
+		barrierLine[0] -= 1;
+		if (barrierLine[0] < 0) {
+			barrierLine[0] = 1000;
+			breakingBarrier = 0;
+		}
+		break;
+	case 2:
+		barrierLine[1] -= 1;
+		if (barrierLine[1] < 0) {
+			barrierLine[1] = 1000;
+			breakingBarrier = 0;
+		}
+		break;
+	case 3:
+		player.isLive = false;
+		break;
+	default:
+		break;
 	}
 }
