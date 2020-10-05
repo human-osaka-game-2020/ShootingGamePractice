@@ -60,7 +60,7 @@ int resetCount = 0;
 int spawnRate = SPAWNRATE_MAX;
 
 // 敵の数
-int enemyCount = 0;
+unsigned int enemyCount = 0;
 
 float enemySpeed = ENEMYSPEED_MIN;
 
@@ -68,6 +68,8 @@ float enemySpeed = ENEMYSPEED_MIN;
 float barrierLine[3] = { 420, 440, 460 };
 // バリアの壊された数
 int breakingBarrier = 0;
+// SE用
+bool barrierSE_Trigger = false;
 
 /*
 	エントリポイント
@@ -188,12 +190,12 @@ void DrawProcessing()
 	}
 
 	// 射撃モードの表示
-	Engine::LoadTexture("SingleMode", "Res/BulletMode_Single.png");
-	Engine::LoadTexture("BurstMode", "Res/BulletMode_Burst.png");
 	if (player.threeWayMode == true) {
+		Engine::LoadTexture("BurstMode", "Res/BulletMode_Burst.png");
 		Engine::DrawTexture(10.0f, 10.0f, "BurstMode", UCHAR_MAX, 0.0f, 2.0f, 2.0f);
 	}
 	else {
+		Engine::LoadTexture("SingleMode", "Res/BulletMode_Single.png");
 		Engine::DrawTexture(10.0f, 10.0f, "SingleMode", UCHAR_MAX, 0.0f, 2.0f, 2.0f);
 	}
 
@@ -212,6 +214,7 @@ void DrawProcessing()
 
 	// ゲームオーバー画面の表示
 	if (player.isLive == false) {
+		Engine::ReleaseAllSoundFiles();
 		Engine::LoadTexture("GameOverScreen", "Res/GameoverScreen.png");
 		Engine::DrawTexture(0, 0, "GameOverScreen", UCHAR_MAX * 0.95f, 0, 0.63f, 1);
 		Engine::DrawFont(240, 300, buf_score, Large, White);
@@ -287,12 +290,14 @@ void ShootBullet() {
 
 				}
 				else {
-					break;;
+					break;
 				}
 
 				if (i == BULLET_MAX - 1) {
 					for (int i = 0; i < BULLET_MAX; i++) {
 						bullet[i].isFired = true;
+						Engine::LoadSoundFile("Fire", "Res/Fire.wav");
+						Engine::PlayDuplicateSound("Fire");
 					}
 				}
 			}
@@ -301,6 +306,8 @@ void ShootBullet() {
 			for (int i = 0; i < BULLET_MAX; i++) {
 				if (bullet[i].isFired == false) {
 					bullet[i].isFired = true;
+					Engine::LoadSoundFile("Fire", "Res/Fire.wav");
+					Engine::PlayDuplicateSound("Fire");
 					break;
 				}
 				else {
@@ -352,6 +359,8 @@ void ToggleFireMode() {
 			}
 
 			if (i == BULLET_MAX - 1) {
+				Engine::LoadSoundFile("ToggleMode", "Res/ToggleMode.wav");
+				Engine::PlayDuplicateSound("ToggleMode");
 				player.threeWayMode = !player.threeWayMode;
 			}
 		}
@@ -371,6 +380,8 @@ void HitProcessing() {
 			enemy[i].playerDistance = sqrt(pow(player.posCenter_x - enemy[i].posCenter_x, 2.0f) + pow(player.posCenter_y - enemy[i].posCenter_y, 2.0f));
 			if (enemy[i].isLive == true && player.isLive == true && enemy[i].playerDistance < (player.hitBox + enemy[i].hitBox)) {
 				player.isLive = false;
+				Engine::LoadSoundFile("PlayerDead", "Res/PlayerDead.wav");
+				Engine::PlayDuplicateSound("PlayerDead");
 			}
 		}
 	}
@@ -384,8 +395,12 @@ void HitProcessing() {
 				bullet[i].enemyDistance = sqrt(pow(bullet[i].posCenter_x - enemy[j].posCenter_x, 2.0f) + pow(bullet[i].posCenter_y - enemy[j].posCenter_y, 2.0f));
 				if (bullet[i].isFired == true && enemy[j].isLive == true && bullet[i].enemyDistance < (bullet[i].hitBox + enemy[j].hitBox)) {
 					score += enemy[j].destroyScore;
+					Engine::LoadSoundFile("Score", "Res/Score.wav");
+					Engine::PlayDuplicateSound("Score");
 					enemy[j].isLive = false;
-					enemyCount--;
+					Engine::LoadSoundFile("EnemyDead", "Res/EnemyDead.wav");
+					Engine::PlayDuplicateSound("EnemyDead");
+					enemyCount -= 1;
 					if (spawnRate >= SPAWNRATE_MIN) {
 						spawnRate -= 10;
 					}
@@ -401,8 +416,9 @@ void HitProcessing() {
 
 	// 敵が画面外に移動した場合は消滅させる
 	for (int i = 0; i < ENEMY_MAX; i++) {
-		if (enemy[i].isLive == true) {
-			enemy[i].WindowOut();
+		if (enemy[i].isLive == true &&
+			enemy[i].WindowOut() == true) {
+			enemy[i].isLive = false;
 			enemyCount--;
 		}
 	}
@@ -416,6 +432,8 @@ void EnemyController() {
 					enemy[i].Reset();
 					enemy[i].moveSpeed = enemySpeed;
 					enemy[i].isLive = true;
+					Engine::LoadSoundFile("SpawnEnemy", "Res/SpawnEnemy.wav");
+					Engine::PlayDuplicateSound("SpawnEnemy");
 					enemyCount++;
 					return;
 				}
@@ -439,7 +457,14 @@ void ResetProcessing() {
 	}
 
 	if (resetCount > 120) {
+		Engine::LoadSoundFile("Reset", "Res/Reset.wav");
+		Engine::PlayDuplicateSound("Reset");
+		player.isLive = false;
 		resetCount = 0;
+		breakingBarrier = 0;
+		barrierLine[0] = 420;
+		barrierLine[1] = 440;
+		barrierLine[2] = 460;
 		score = 0;
 		enemyCount = 0;
 		spawnRate = SPAWNRATE_MAX;
@@ -454,11 +479,18 @@ void ResetProcessing() {
 void BarrierProcessing() {
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < ENEMY_MAX; j++) {
+			enemy[j].calcPosCenter();
 			if (enemy[j].isLive == true && enemy[j].posCenter_y > barrierLine[i]) {
 				enemy[j].isLive = false;
+				Engine::LoadSoundFile("EnemyDead", "Res/EnemyDead.wav");
+				Engine::PlayDuplicateSound("EnemyDead");
 				enemyCount -= 1;
-				spawnRate *= 0.95f;
-				enemySpeed *= 0.95f;
+				if (spawnRate > SPAWNRATE_MIN) {
+					spawnRate -= 10;
+				}
+				if (enemySpeed > ENEMYSPEED_MIN) {
+					enemySpeed -= 0.02f;
+				}
 				breakingBarrier = i + 1;
 			}
 		}
@@ -468,6 +500,11 @@ void BarrierProcessing() {
 	{
 	case 1:
 		barrierLine[0] -= 1;
+		if (barrierSE_Trigger == false) {
+			Engine::LoadSoundFile("BarrierMove", "Res/BarrierMove.wav");
+			Engine::PlaySoundA("BarrierMove", true);
+			barrierSE_Trigger = true;
+		}
 		if (barrierLine[0] < 0) {
 			barrierLine[0] = 1000;
 			breakingBarrier = 0;
@@ -475,6 +512,11 @@ void BarrierProcessing() {
 		break;
 	case 2:
 		barrierLine[1] -= 1;
+		if (barrierSE_Trigger == false) {
+			Engine::LoadSoundFile("BarrierMove", "Res/BarrierMove.wav");
+			Engine::PlaySoundA("BarrierMove", true);
+			barrierSE_Trigger = true;
+		}
 		if (barrierLine[1] < 0) {
 			barrierLine[1] = 1000;
 			breakingBarrier = 0;
@@ -482,8 +524,12 @@ void BarrierProcessing() {
 		break;
 	case 3:
 		player.isLive = false;
+		Engine::LoadSoundFile("PlayerDead", "Res/PlayerDead.wav");
+		Engine::PlayDuplicateSound("PlayerDead");
 		break;
 	default:
+		Engine::StopSound("BarrierMove");
+		barrierSE_Trigger = false;
 		break;
 	}
 }
