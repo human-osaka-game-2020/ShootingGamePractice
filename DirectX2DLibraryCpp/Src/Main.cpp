@@ -133,6 +133,8 @@ void GameProcessing()
 	// 入力データの更新
 	Engine::Update();
 
+
+
 	if (player.isLive == true) {
 		PlayerMove();
 		ShootBullet();
@@ -214,7 +216,6 @@ void DrawProcessing()
 
 	// ゲームオーバー画面の表示
 	if (player.isLive == false) {
-		Engine::ReleaseAllSoundFiles();
 		Engine::LoadTexture("GameOverScreen", "Res/GameoverScreen.png");
 		Engine::DrawTexture(0, 0, "GameOverScreen", UCHAR_MAX * 0.95f, 0, 0.63f, 1);
 		Engine::DrawFont(240, 300, buf_score, Large, White);
@@ -380,8 +381,11 @@ void HitProcessing() {
 			enemy[i].playerDistance = sqrt(pow(player.posCenter_x - enemy[i].posCenter_x, 2.0f) + pow(player.posCenter_y - enemy[i].posCenter_y, 2.0f));
 			if (enemy[i].isLive == true && player.isLive == true && enemy[i].playerDistance < (player.hitBox + enemy[i].hitBox)) {
 				player.isLive = false;
+				Engine::ReleaseAllSoundFiles();
 				Engine::LoadSoundFile("PlayerDead", "Res/PlayerDead.wav");
 				Engine::PlayDuplicateSound("PlayerDead");
+				Engine::LoadSoundFile("Gameover", "Res/Gameover.wav");
+				Engine::PlaySoundA("Gameover");
 			}
 		}
 	}
@@ -459,6 +463,7 @@ void ResetProcessing() {
 	if (resetCount > 120) {
 		Engine::LoadSoundFile("Reset", "Res/Reset.wav");
 		Engine::PlayDuplicateSound("Reset");
+		Engine::ReleaseAllSoundFiles();
 		player.isLive = false;
 		resetCount = 0;
 		breakingBarrier = 0;
@@ -473,6 +478,8 @@ void ResetProcessing() {
 			enemy[i].moveSpeed = ENEMYSPEED_MIN;
 		}
 		player.Reset();
+		Engine::LoadSoundFile("Gamemusic", "Res/Gamemusic.wav");
+		Engine::PlaySoundA("Gamemusic", true);
 	}
 }
 
