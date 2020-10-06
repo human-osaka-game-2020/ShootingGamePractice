@@ -33,6 +33,8 @@ void EnemyMoving();
 void ResetProcessing();
 // バリアの処理
 void BarrierProcessing();
+// 死亡エフェクトの表示
+void Effect(bool isEnemy, int EnemyNum = (0));
 
 
 const static int BULLET_MAX = 3;
@@ -70,6 +72,8 @@ float barrierLine[3] = { 420, 440, 460 };
 int breakingBarrier = 0;
 // SE用
 bool barrierSE_Trigger = false;
+
+bool resetFlag = false;
 
 /*
 	エントリポイント
@@ -133,6 +137,12 @@ void GameProcessing()
 	// 入力データの更新
 	Engine::Update();
 
+	static bool bgm = false;
+	if (bgm == false) {
+		Engine::LoadSoundFile("Gamemusic", "Res/Gamemusic.wav");
+		Engine::PlaySoundA("Gamemusic", true);
+		bgm = true;
+	}
 
 
 	if (player.isLive == true) {
@@ -219,6 +229,12 @@ void DrawProcessing()
 		Engine::LoadTexture("GameOverScreen", "Res/GameoverScreen.png");
 		Engine::DrawTexture(0, 0, "GameOverScreen", UCHAR_MAX * 0.95f, 0, 0.63f, 1);
 		Engine::DrawFont(240, 300, buf_score, Large, White);
+	}
+
+	// リセット画面
+	if (resetFlag) {
+		Engine::LoadTexture("ResetScreen", "Res/Load.png");
+		Engine::DrawTexture(0, 0, "ResetScreen", UCHAR_MAX, 0, 0.63f, 0.94f);
 	}
 
 	// デバッグ情報
@@ -382,6 +398,7 @@ void HitProcessing() {
 			if (enemy[i].isLive == true && player.isLive == true && enemy[i].playerDistance < (player.hitBox + enemy[i].hitBox)) {
 				player.isLive = false;
 				Engine::ReleaseAllSoundFiles();
+				Effect(false);
 				Engine::LoadSoundFile("PlayerDead", "Res/PlayerDead.wav");
 				Engine::PlayDuplicateSound("PlayerDead");
 				Engine::LoadSoundFile("Gameover", "Res/Gameover.wav");
@@ -402,6 +419,7 @@ void HitProcessing() {
 					Engine::LoadSoundFile("Score", "Res/Score.wav");
 					Engine::PlayDuplicateSound("Score");
 					enemy[j].isLive = false;
+					Effect(true, j);
 					Engine::LoadSoundFile("EnemyDead", "Res/EnemyDead.wav");
 					Engine::PlayDuplicateSound("EnemyDead");
 					enemyCount -= 1;
@@ -461,11 +479,12 @@ void ResetProcessing() {
 	}
 
 	if (resetCount > 120) {
+		resetFlag = true;
+		resetCount = 0;
 		Engine::LoadSoundFile("Reset", "Res/Reset.wav");
 		Engine::PlayDuplicateSound("Reset");
 		Engine::ReleaseAllSoundFiles();
 		player.isLive = false;
-		resetCount = 0;
 		breakingBarrier = 0;
 		barrierLine[0] = 420;
 		barrierLine[1] = 440;
@@ -480,6 +499,7 @@ void ResetProcessing() {
 		player.Reset();
 		Engine::LoadSoundFile("Gamemusic", "Res/Gamemusic.wav");
 		Engine::PlaySoundA("Gamemusic", true);
+		resetFlag = false;
 	}
 }
 
@@ -489,6 +509,7 @@ void BarrierProcessing() {
 			enemy[j].calcPosCenter();
 			if (enemy[j].isLive == true && enemy[j].posCenter_y > barrierLine[i]) {
 				enemy[j].isLive = false;
+				Effect(true, j);
 				Engine::LoadSoundFile("EnemyDead", "Res/EnemyDead.wav");
 				Engine::PlayDuplicateSound("EnemyDead");
 				enemyCount -= 1;
@@ -531,6 +552,7 @@ void BarrierProcessing() {
 		break;
 	case 3:
 		player.isLive = false;
+		Effect(false);
 		Engine::LoadSoundFile("PlayerDead", "Res/PlayerDead.wav");
 		Engine::PlayDuplicateSound("PlayerDead");
 		break;
@@ -539,4 +561,18 @@ void BarrierProcessing() {
 		barrierSE_Trigger = false;
 		break;
 	}
+}
+
+void Effect(bool isEnemy, int EnemyNum) {
+
+	if (isEnemy) {
+		Engine::LoadTexture("Effect_EnemyDead", "Res/Break.png");
+		Engine::DrawTexture(enemy[EnemyNum].pos_x, enemy[EnemyNum].pos_y, "Effect_EnemyDead", UCHAR_MAX, 0, enemy[EnemyNum].textureScaling, enemy[EnemyNum].textureScaling);
+	}
+	else {
+		Engine::LoadTexture("Effect_PlayerDead", "Res/Break2.png");
+		Engine::DrawTexture(player.pos_x, player.pos_y, "Effect_PlayerDead", UCHAR_MAX, 0, player.textureScaling, player.textureScaling);
+	}
+
+	Engine::FinishDrawing();
 }
