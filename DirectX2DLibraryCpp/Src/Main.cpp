@@ -16,12 +16,15 @@ float EnemyTimer = 0.0f;
 float Timer = 0.0f;
 int EnemyCount = 0;
 int Enemy[10];
+float tmp;
 float speed = 2.0f;
 float BackGround_1 = 0.0f;
 float BackGround_2 = 1536.0f;
 bool Spawn1 = false;
 bool Spawn2 = false;
 bool Spawn3 = false;
+bool up = true;
+
 
 // ゲーム処理
 void GameProcessing();
@@ -34,6 +37,34 @@ typedef struct
 	float m_PosY;		// Y座標
 	float m_Radius;		// 半径
 } Circle;
+
+//プレイヤーの当たり判定の範囲
+Circle player_cir = {
+	Player_Pos.X,
+	Player_Pos.Y,
+	16.0f
+};
+
+// 敵の当たり判定の範囲
+Circle enemy_cir1 = {
+	Enemy1_Pos.X,
+	Enemy1_Pos.Y,
+	16.0f,
+};
+
+Circle enemy_cir2 = {
+	Enemy2_Pos.X,
+	Enemy2_Pos.Y,
+	16.0f,
+};
+
+Circle enemy_cir3 = {
+	Enemy3_Pos.X,
+	Enemy3_Pos.Y,
+	16.0f,
+};
+
+bool OnCollisionCircle(Circle circle1, Circle circle2);
 
 /*
 	エントリポイント
@@ -160,24 +191,8 @@ void GameProcessing()
 		is_add = !is_add;
 	}
 	
-	Circle circle1 = {
-		Player_Pos.X,
-		Player_Pos.Y,
-		16.0f
-	};
-
-	// 円２の情報
-	Circle circle2 = {
-		Enemy1_Pos.X,
-		Enemy1_Pos.Y,
-		16.0f,
-	};
-
-	/*if (OnCollisionCircle(circle1, circle2) == true)
-	{
-
-	}
-	*/
+	
+	
 }
 
 void DrawProcessing()
@@ -197,8 +212,6 @@ void DrawProcessing()
 
 	Engine::DrawTexture(BackGround_1, 0.0f, "Haikei", 255, 0.0f, 1.5f, 1.5f);
 	Engine::DrawTexture(BackGround_2, 0.0f, "Haikei", 255, 0.0f, 1.5f, 1.5f);
-	
-	Engine::DrawTexture(Player_Pos.X, Player_Pos.Y, "RMAKE1", 500, -90.0f, 0.5f, 0.5f);
 
 	if (EnemyTimer >= 2.0f)
 	{
@@ -209,33 +222,57 @@ void DrawProcessing()
 			Engine::DrawTexture(Enemy1_Pos.X, Enemy1_Pos.Y, "Enemy1", 500, -90.0f, 0.5f, 0.5f);
 			Spawn1 = true;
 		}
-		if(EnemyCount == 2 || Spawn2 == true)
+		if (EnemyCount == 2 || Spawn2 == true)
 		{
 			Engine::DrawTexture(Enemy2_Pos.X, Enemy2_Pos.Y, "Enemy1", 500, -90.0f, 0.5f, 0.5f);
 			Spawn2 = true;
 		}
-		if(EnemyCount == 3 || Spawn3 == true)
+		if (EnemyCount == 3 || Spawn3 == true)
 		{
 			Engine::DrawTexture(Enemy3_Pos.X, Enemy3_Pos.Y, "Enemy1", 500, -90.0f, 0.5f, 0.5f);
 			Spawn3 = true;
 		}
 		EnemyTimer = 0.0f;
 	}
-	bool up = true;
 	Enemy1_Pos.X -= speed;
 	Enemy2_Pos.X -= 1.5f;
-	if (Timer >= 1.5f && up == true)
+	if (Enemy2_Pos.Y <= 130)
 	{
 			up = false;
-			Enemy2_Pos.Y += 2.0f;
 	}
-	if(Timer >= 1.5f && up == false)
+	else if (Enemy2_Pos.Y >= 350)
 	{
 			up = true;
-			Enemy2_Pos.Y -= 2.0f;
+	}
+	if (up == true)
+	{
+		Enemy2_Pos.Y -= 2.0f;
+	}
+	else
+	{
+		Enemy2_Pos.Y += 2.0f;
 	}
 	
+	Engine::DrawTexture(Player_Pos.X, Player_Pos.Y, "RMAKE1", 500, -90.0f, 0.5f, 0.5f);
 
+	//プレイヤーと衝突時の敵の描画
+	if (OnCollisionCircle(player_cir, enemy_cir1) == true)
+	{
+		Engine::DrawTexture(Enemy1_Pos.X, Enemy1_Pos.Y, "Enemy1", 0, -90.0f, 0.5f, 0.5f);
+		Spawn1 = false;
+	}
+	if (OnCollisionCircle(player_cir, enemy_cir2) == true)
+	{
+		Spawn2 = false;
+	}
+	if (OnCollisionCircle(player_cir, enemy_cir3) == true)
+	{
+		Spawn3 = false;
+	}
+
+
+
+	//背景のスクロール
 	BackGround_1 -= 0.5f;
 	if (BackGround_1 <= -1536.0f)
 	{
@@ -250,11 +287,14 @@ void DrawProcessing()
 	// 描画処理を終了する場合、必ず最後に実行する
 	Engine::FinishDrawing();
 }
+	//当たり判定計算用関数の定義
 bool OnCollisionCircle(Circle circle1, Circle circle2)
 {
 	float a = circle1.m_PosX - circle2.m_PosX;
 	float b = circle1.m_PosY - circle2.m_PosY;
-	float c = sqrt(a * a + b * b);
+	tmp = a * a;
+	tmp += b * b;
+	float c = sqrt(tmp);
 	float sum_radius = circle1.m_Radius + circle2.m_Radius;
 
 	if (c <= sum_radius)
