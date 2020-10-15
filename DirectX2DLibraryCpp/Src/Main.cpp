@@ -63,7 +63,10 @@ phase Phase;
 void GameProcessing();
 // 描画処理
 void DrawProcessing();
+// サウンド処理
+void SoundProcessing();
 
+void Init();
 void PlayerMove();
 void PlayerDraw();;
 void PlayerHpDraw();
@@ -104,6 +107,13 @@ int WINAPI WinMain(
 	Engine::LoadTexture("BackGround", "Res/background.jpg");
 	Engine::LoadTexture("Heart", "Res/Heart.png");
 	Engine::LoadTexture("Result", "Res/result.jpg");
+	Engine::LoadSoundFile("OP", "Res/bgm_maoudamashii_neorock82.wav");
+	Engine::LoadSoundFile("BGM1", "Res/game_maoudamashii_1_battle34.wav");
+	Engine::LoadSoundFile("BGM2", "Res/song_shiho_shining_star.wav");
+	Engine::LoadSoundFile("BGM3", "Res/bgm_maoudamashii_acoustic52.wav");
+	Engine::LoadSoundFile("SE1", "Res/se_maoudamashii_battle14.wav");
+	Engine::LoadSoundFile("SE2", "Res/se_maoudamashii_battle06.wav");
+	Engine::LoadSoundFile("SE3", "Res/se_maoudamashii_battle18.wav");
 
 	srand((unsigned)time(NULL));			
 
@@ -131,6 +141,9 @@ int WINAPI WinMain(
 
 			// 描画開始
 			DrawProcessing();
+
+			// サウンド
+			SoundProcessing();
 		}
 	}
 
@@ -153,28 +166,7 @@ void GameProcessing()
 	switch (Phase)
 	{
 	case title:
-		g_Player_x = 50.0f;
-		g_Player_y = 215.0f;
-		FlameCount = 20;
-		EnemyKnockDownCount = 0;
-		for (int i = HpMAX - 1; i >= 0; i--)
-		{
-			PlayerHp[i] = true;
-		}
-		EnemySpawnTime = timeGetTime();
-		BulletSpawnTime = timeGetTime() - 400;
-		for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
-		{
-			EnemySpawn[EnemyNum] = false;
-			EA[EnemyNum].Enemy_x = 640.0f;
-			EA[EnemyNum].Enemy_y = 100.0f + rand() % 20 * 16;
-		}
-		BackGround_x[0] = { -200.0f };
-		BackGround_x[1] = { 822.0f };
-		BackGround_y[0] = { 0.0f };
-		BackGround_y[1] = { 0.0f };
-
-
+		Init();		
 		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
 		{
 			Phase = battle;
@@ -233,6 +225,73 @@ void DrawProcessing()
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
 	Engine::FinishDrawing();
+}
+
+void SoundProcessing()
+{
+	if (Phase == title)
+	{
+		Engine::StopSound("BGM2");
+		Engine::StopSound("BGM3");
+		Engine::PlaySoundA("OP", true);
+	}
+	else if (Phase == battle)
+	{
+		Engine::StopSound("OP");
+		if (EnemyKnockDownCount < 50)
+		{
+			Engine::PlaySoundA("BGM1", true);
+		}
+		else
+		{
+			Engine::StopSound("BGM1");
+			Engine::PlaySoundA("BGM2", true);
+		}
+	}
+	else if (Phase == result)
+	{
+		if (EnemyKnockDownCount < 100)
+		{
+			Engine::StopSound("BGM1");
+			Engine::StopSound("BGM2");
+			Engine::PlaySoundA("BGM3", true);
+		}
+	}
+
+	
+}
+
+// 初期化
+void Init()
+{
+	g_Player_x = 50.0f;
+	g_Player_y = 215.0f;
+	FlameCount = 20;
+	EnemyKnockDownCount = 0;
+	for (int i = HpMAX - 1; i >= 0; i--)
+	{
+		PlayerHp[i] = true;
+	}
+	EnemySpawnTime = timeGetTime();
+	BulletSpawnTime = timeGetTime() - 400;
+	for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
+	{
+		EnemySpawn[EnemyNum] = false;
+		EA[EnemyNum].Enemy_x = 640.0f;
+		EA[EnemyNum].Enemy_y = 100.0f + rand() % 20 * 16;
+	}
+	for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
+	{
+		BulletSpawn[BulletNum] = false;
+		BulletPos[BulletNum].Bullet_x = g_Player_x + 66.0f;
+		BulletPos[BulletNum].Bullet_y = g_Player_y + 33.0f;
+	}
+	BackGround_x[0] = { -200.0f };
+	BackGround_x[1] = { 822.0f };
+	BackGround_y[0] = { 0.0f };
+	BackGround_y[1] = { 0.0f };
+
+
 }
 
 // プレイヤーの移動
@@ -300,7 +359,7 @@ void EnemyMove()
 		}
 		if (EnemySpawn[EnemyNum] == true)
 		{
-			EA[EnemyNum].Enemy_x -= 2.0f;
+			EA[EnemyNum].Enemy_x -= 3.0f;
 			EnemyUpDownMotion(EnemyNum);
 			EnemyCircularMotion(EnemyNum);
 		}
@@ -394,6 +453,7 @@ void BulletMove()
 				BulletPos[BulletNum].Bullet_x = g_Player_x + 66.0f;
 				BulletPos[BulletNum].Bullet_y = g_Player_y + 33.0f;
 				BulletSpawnTime = timeGetTime();
+				Engine::PlayDuplicateSound("SE1");
 			}
 		}
 		if (BulletSpawn[BulletNum] == true)
@@ -440,6 +500,7 @@ bool Contact_Player_Enemy(int num)
 			{
 				PlayerHp[i] = false;
 				FlameCount = 0;
+				Engine::PlayDuplicateSound("SE2");
 				break;
 			}
 		}
@@ -469,6 +530,7 @@ bool Contact_Bullet_Enemy(int num)
 		{
 			BulletSpawn[BulletNum] = false;
 			EnemyKnockDownCount++;
+			Engine::PlayDuplicateSound("SE3");
 			return true;
 		}
 	}
@@ -525,4 +587,17 @@ void ResultDraw()
 	char EnemyKnockDownCountString[4];
 	sprintf_s(EnemyKnockDownCountString, 4, "%d", EnemyKnockDownCount);
 	Engine::DrawFont(430.0f, 233.0f, EnemyKnockDownCountString, FontSize::Large, FontColor::White);
+	if (EnemyKnockDownCount < 50)
+	{
+		Engine::DrawFont(270.0f, 280.0f, "頑張れ！", FontSize::Large, FontColor::White);
+	}
+	else if (EnemyKnockDownCount < 99)
+	{
+		Engine::DrawFont(220.0f, 280.0f, "あともう少し！", FontSize::Large, FontColor::White);
+	}
+	else
+	{
+		Engine::DrawFont(220.0f, 280.0f, "ゲームクリア！", FontSize::Large, FontColor::White);
+		Engine::DrawFont(230.0f, 320.0f, "おめでとう！", FontSize::Large, FontColor::White);
+	}
 }
