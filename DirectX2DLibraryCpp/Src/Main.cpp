@@ -6,14 +6,20 @@
 #include "Common/Vec.h"
 #include <time.h>
 
+const int HpMAX = 3;			// プレイヤーの最大HP
+bool PlayerHp[HpMAX];			// プレイヤーの残Hp
 float g_Player_x = 50.0f;		// プレイヤーのx座標
 float g_Player_y = 215.0f;		// プレイヤーのy座標
+float PlayerHp_x[HpMAX];		// HpUIのx座標
+float PlayerHp_y = 0.0f;		// HpUIのy座標
+int FlameCount = 20;			// 敵との衝突判定時のFlameCount初期化
 
 const int EnemyStock = 10;		// 敵の出現可能数
 bool EnemySpawn[EnemyStock];	// 敵が出現しているか判断
 int EnemySpawnTime = 0;			// 敵が出現した時間
 int EnemyElapsedTime = 0;		// 前の敵が出現して経過した時間
 bool EnemyMoveSwitch = false;	// 敵の動きを変えるための変数
+int EnemyKnockDownCount = 0;
 
 const int BulletStock = 10;		// 弾の出現可能数
 bool BulletSpawn[BulletStock];	// 弾が出現しているか判断
@@ -45,12 +51,22 @@ public:
 };
 Bullet BulletPos[BulletStock];		// BulletをBulletStock個分複製
 
+enum phase
+{
+	title,
+	battle,
+	result,
+};
+phase Phase;
+
 // ゲーム処理
 void GameProcessing();
 // 描画処理
 void DrawProcessing();
 
 void PlayerMove();
+void PlayerDraw();;
+void PlayerHpDraw();
 void EnemyMove();
 void EnemyUpDownMotion(int EnemyNum);
 void EnemyCircularMotion(int EnemyNum);
@@ -62,6 +78,8 @@ bool Contact_Player_Enemy(int num);
 bool Contact_Bullet_Enemy(int num);
 void BackGroundMove();
 void BackGroundDraw();
+void EnemyKnockDownUI();
+void ResultDraw();
 
 /*
 	エントリポイント
@@ -84,11 +102,10 @@ int WINAPI WinMain(
 	Engine::LoadTexture("Enemy1", "Res/Enemy1.png");
 	Engine::LoadTexture("Bullet1", "Res/Bullet1.png");
 	Engine::LoadTexture("BackGround", "Res/background.jpg");
+	Engine::LoadTexture("Heart", "Res/Heart.png");
+	Engine::LoadTexture("Result", "Res/result.jpg");
 
-	srand((unsigned)time(NULL));
-
-	EnemySpawnTime = timeGetTime();
-	BulletSpawnTime = timeGetTime() - 400;
+	srand((unsigned)time(NULL));			
 
 	while (true)
 	{
@@ -133,12 +150,57 @@ void GameProcessing()
 {
 	// 入力データの更新
 	Engine::Update();
+	switch (Phase)
+	{
+	case title:
+		g_Player_x = 50.0f;
+		g_Player_y = 215.0f;
+		FlameCount = 20;
+		EnemyKnockDownCount = 0;
+		for (int i = HpMAX - 1; i >= 0; i--)
+		{
+			PlayerHp[i] = true;
+		}
+		EnemySpawnTime = timeGetTime();
+		BulletSpawnTime = timeGetTime() - 400;
+		for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
+		{
+			EnemySpawn[EnemyNum] = false;
+			EA[EnemyNum].Enemy_x = 640.0f;
+			EA[EnemyNum].Enemy_y = 100.0f + rand() % 20 * 16;
+		}
+		BackGround_x[0] = { -200.0f };
+		BackGround_x[1] = { 822.0f };
+		BackGround_y[0] = { 0.0f };
+		BackGround_y[1] = { 0.0f };
 
-	PlayerMove();
-	EnemyMove();
-	EnemyDelete();	
-	BulletMove();
-	BackGroundMove();
+
+		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
+		{
+			Phase = battle;
+		}
+		break;
+
+	case battle:
+		PlayerMove();		
+		EnemyMove();
+		EnemyDelete();
+		BulletMove();
+		BackGroundMove();
+		FlameCount++;
+		if (PlayerHp[0] == false)
+		{
+			Phase = result;
+		}
+		break;
+
+	case result:
+		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
+		{
+			Phase = title;
+		}
+		break;
+	}
 }
 
 void DrawProcessing()
@@ -148,12 +210,26 @@ void DrawProcessing()
 	Engine::StartDrawing(0);
 
 	// テクスチャ描画
-	BackGroundDraw();
-	Engine::DrawTexture(g_Player_x, g_Player_y, "Player",255,0.0f,1.2f,1.2f);
-	EnemyDraw();
-	BulletDraw();
+	if (Phase == title)
+	{
+		BackGroundDraw();
+		Engine::DrawFont(220.0f, 140.0f, "SHOOTINGGAME", FontSize::Large, FontColor::White);
+		Engine::DrawFont(210.0f, 280.0f, "PUSH ENTER KEY", FontSize::Large, FontColor::White);
+	}
+	else if (Phase == battle)
+	{
+		BackGroundDraw();
+		PlayerDraw();
+		PlayerHpDraw();
+		EnemyDraw();
+		BulletDraw();
+		EnemyKnockDownUI();
+	}
+	else if(Phase == result)
+	{
+		ResultDraw();		
+	}
 	
-
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
 	Engine::FinishDrawing();
@@ -162,21 +238,46 @@ void DrawProcessing()
 // プレイヤーの移動
 void PlayerMove()
 {
-	if (Engine::IsKeyboardKeyHeld(DIK_UP)&& g_Player_y >= 10)
-	{	
-		g_Player_y -= 3.0f;		
-	}
-	if (Engine::IsKeyboardKeyHeld(DIK_DOWN)&& g_Player_y <= 400)
+	if (PlayerHp[0] == true)
 	{
-		g_Player_y += 3.0f;
+		if (Engine::IsKeyboardKeyHeld(DIK_UP) && g_Player_y >= 50)
+		{
+			g_Player_y -= 3.0f;
+		}
+		if (Engine::IsKeyboardKeyHeld(DIK_DOWN) && g_Player_y <= 400)
+		{
+			g_Player_y += 3.0f;
+		}
+		if (Engine::IsKeyboardKeyHeld(DIK_LEFT) && g_Player_x >= 20)
+		{
+			g_Player_x -= 3.0f;
+		}
+		if (Engine::IsKeyboardKeyHeld(DIK_RIGHT) && g_Player_x <= 550)
+		{
+			g_Player_x += 3.0f;
+		}
 	}
-	if (Engine::IsKeyboardKeyHeld(DIK_LEFT)&& g_Player_x >= 20)
+}
+
+// プレイヤーの描画
+void PlayerDraw()
+{
+	if (PlayerHp[0] == true)
 	{
-		g_Player_x -= 3.0f;	
+		Engine::DrawTexture(g_Player_x, g_Player_y, "Player", 255, 0.0f, 1.2f, 1.2f);
 	}
-	if (Engine::IsKeyboardKeyHeld(DIK_RIGHT)&& g_Player_x <= 550)
-	{	
-		g_Player_x += 3.0f;	
+}
+
+// プレイヤーのHPの描画
+void PlayerHpDraw()
+{
+	for (int i = HpMAX - 1; i >= 0; i--)
+	{
+		PlayerHp_x[i] = i * 60;
+		if (PlayerHp[i] == true)
+		{
+			Engine::DrawTexture(PlayerHp_x[i], 0.0f, "Heart");
+		}
 	}
 }
 
@@ -262,12 +363,12 @@ void EnemyDelete()
 			Contact_Player_Enemy(num) == true ||
 			Contact_Bullet_Enemy(num) == true)
 		{
-			EnemySpawn[num] = false;
+			EnemySpawn[num] = false;			
 		}
 	}
 }
 
-// 敵の描写
+// 敵の描画
 void EnemyDraw()
 {
 	for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
@@ -306,7 +407,7 @@ void BulletMove()
 	}
 }
 
-// 弾の描写
+// 弾の描画
 void BulletDraw()
 {
 	for (int BulletNum = 0; BulletNum < BulletStock; BulletNum++)
@@ -333,6 +434,15 @@ bool Contact_Player_Enemy(int num)
 		  g_Player_y + 56.0f >= EA[num].Enemy_y + 10.0f))
 	   )
 	{
+		for (int i = HpMAX - 1; i >= 0; i--)
+		{
+			if (PlayerHp[i] == true && FlameCount >= 20)
+			{
+				PlayerHp[i] = false;
+				FlameCount = 0;
+				break;
+			}
+		}
 		return true;		
 	}
 	return false;
@@ -358,6 +468,7 @@ bool Contact_Bullet_Enemy(int num)
 		   )
 		{
 			BulletSpawn[BulletNum] = false;
+			EnemyKnockDownCount++;
 			return true;
 		}
 	}
@@ -385,4 +496,33 @@ void BackGroundDraw()
 	{
 		Engine::DrawTexture(BackGround_x[BGNum], BackGround_y[BGNum],"BackGround");
 	}
+}
+
+// 倒した敵の数のUI
+void EnemyKnockDownUI()
+{
+	Engine::DrawTexture(450.0f, 5.0f, "Enemy1", 255, 0.0f, 1.2f, 1.2f);
+	char EnemyKnockDownCountString[8];
+	if (EnemyKnockDownCount < 100)
+	{
+		sprintf_s(EnemyKnockDownCountString, 7, "× %02d", EnemyKnockDownCount);
+	}
+	else
+	{
+		sprintf_s(EnemyKnockDownCountString, 7, "× 99+", EnemyKnockDownCount);
+	}
+	
+	Engine::DrawFont(530.0f, 0.0f, EnemyKnockDownCountString, FontSize::Large, FontColor::White);
+}
+
+
+// リザルトの描画
+void ResultDraw()
+{
+	Engine::DrawTexture(-200.0f, -10.0f, "Result");
+	Engine::DrawFont(280.0f, 140.0f, "RESULT", FontSize::Large, FontColor::White);
+	Engine::DrawFont(200.0f, 230.0f, "倒した敵の数：", FontSize::Large, FontColor::White);
+	char EnemyKnockDownCountString[4];
+	sprintf_s(EnemyKnockDownCountString, 4, "%d", EnemyKnockDownCount);
+	Engine::DrawFont(430.0f, 233.0f, EnemyKnockDownCountString, FontSize::Large, FontColor::White);
 }
