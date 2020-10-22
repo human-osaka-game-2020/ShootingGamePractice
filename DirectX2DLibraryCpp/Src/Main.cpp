@@ -161,19 +161,20 @@ void GameProcessing()
 	case title:
 		Init();	
 		FlameCount++;
-		if (FlameCount == 60)
+		if (FlameCount > 60)
 		{
 			FlameCount = 0;
 		}
 		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
 		{
+			FlameCount = 0;
 			Phase = battle;
 		}
 		break;
 
 	case battle:
 		FlameCount++;
-		if (FlameCount == 40)
+		if (FlameCount >= 40)
 		{
 			FlameCount = 0;
 		}
@@ -420,7 +421,7 @@ void EnemyUpDownMotion(int EnemyNum)
 // 円運動しながら進む敵の動き
 void EnemyCircularMotion(int EnemyNum)
 {
-	if (EnemyNum == 4 || EnemyNum == 9)
+	if (EnemyNum == 3 || EnemyNum == 9)
 	{
 		float radius = EA[EnemyNum].Angle * 3.14f / 180.0f;
 
