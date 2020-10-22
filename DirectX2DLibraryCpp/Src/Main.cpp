@@ -17,12 +17,12 @@ float Timer = 0.0f;
 int EnemyCount = 0;
 int Enemy[10];
 float tmp;
-float speed = 2.0f;
+float speed = 2.5f;
 float BackGround_1 = 0.0f;
 float BackGround_2 = 1536.0f;
-bool Spawn1 = false;
-bool Spawn2 = false;
-bool Spawn3 = false;
+bool Spawn1 = true;
+bool Spawn2 = true;
+bool Spawn3 = true;
 bool up = true;
 
 
@@ -96,6 +96,7 @@ int WINAPI WinMain(
 	Engine::LoadSoundFile("Se", "Res/Se.wav");
 
 
+
 	while (true)
 	{
 		bool message_ret = false;
@@ -140,24 +141,27 @@ void GameProcessing()
 	// 入力データの更新
 	Engine::Update();
 
+	EnemyTimer = (float)timeGetTime();
+	Timer = (float)timeGetTime();
+
 	g_Angle += 1.0f;
 
 	// キーボードの入力取得
-	if (Engine::IsKeyboardKeyHeld(DIK_LEFT) == true && Player_Pos.X > 0)
+	if (Engine::IsKeyboardKeyHeld(DIK_LEFT) == true && player_cir.m_PosX > 0)
 	{
-		Player_Pos.X -= speed;
+		player_cir.m_PosX -= speed;
 	}
-	else if (Engine::IsKeyboardKeyHeld(DIK_RIGHT) == true && Player_Pos.X < 610)
+	else if (Engine::IsKeyboardKeyHeld(DIK_RIGHT) == true && player_cir.m_PosX < 610)
 	{
-		Player_Pos.X += speed;
+		player_cir.m_PosX += speed;
 	}
-	if (Engine::IsKeyboardKeyHeld(DIK_UP) == true && Player_Pos.Y > 30)
+	if (Engine::IsKeyboardKeyHeld(DIK_UP) == true && player_cir.m_PosY > 30)
 	{
-		Player_Pos.Y -= speed;
+		player_cir.m_PosY -= speed;
 	}
-	else if (Engine::IsKeyboardKeyHeld(DIK_DOWN) == true && Player_Pos.Y < 480)
+	else if (Engine::IsKeyboardKeyHeld(DIK_DOWN) == true && player_cir.m_PosY < 480)
 	{
-		Player_Pos.Y += speed;
+		player_cir.m_PosY += speed;
 	}
 
 	// 軸の切り替え
@@ -190,34 +194,28 @@ void GameProcessing()
 	{
 		is_add = !is_add;
 	}
-	
-	
-	
-}
 
-void DrawProcessing()
-{
-	// 描画開始
-	// 描画処理を実行する場合、必ず最初実行する
-	Engine::StartDrawing(0);
-
-	EnemyTimer = timeGetTime();
-	Timer = timeGetTime();
-
-	// テクスチャ描画
-	// キーワードで指定されたテクスチャを描画する
-	// DrawTextureはテクスチャをそのまま描画する
-	// 一部切り取って描画する場合はDrawTextureUVを使用する
-	Engine::SetPivotType(PivotType::LeftTop);
-
-	Engine::DrawTexture(BackGround_1, 0.0f, "Haikei", 255, 0.0f, 1.5f, 1.5f);
-	Engine::DrawTexture(BackGround_2, 0.0f, "Haikei", 255, 0.0f, 1.5f, 1.5f);
-
-	if (EnemyTimer >= 2.0f)
+	/*if (EnemyTimer >= 20.0f)
 	{
 		srand(unsigned(timeGetTime()));
+		EnemyCount = rand() % 3;
 		EnemyCount += 1;
-		if (EnemyCount == 1 || Spawn1 == true)
+
+		if (EnemyCount == 1)
+		{
+			Spawn1 = true;
+		}
+		if (EnemyCount == 2)
+		{
+			Spawn2 = true;
+		}
+		if (EnemyCount == 3)
+		{
+			Spawn3 = true;
+		}*/
+
+		//修正前↓
+		/*if (EnemyCount == 1 || Spawn1 == true)
 		{
 			Engine::DrawTexture(Enemy1_Pos.X, Enemy1_Pos.Y, "Enemy1", 500, -90.0f, 0.5f, 0.5f);
 			Spawn1 = true;
@@ -231,34 +229,32 @@ void DrawProcessing()
 		{
 			Engine::DrawTexture(Enemy3_Pos.X, Enemy3_Pos.Y, "Enemy1", 500, -90.0f, 0.5f, 0.5f);
 			Spawn3 = true;
-		}
-		EnemyTimer = 0.0f;
-	}
-	Enemy1_Pos.X -= speed;
-	Enemy2_Pos.X -= 1.5f;
-	if (Enemy2_Pos.Y <= 130)
+		}*/
+	//	EnemyTimer = 0.0f;
+	//}
+	enemy_cir1.m_PosX -= speed;
+	enemy_cir2.m_PosX -= 2.0f;
+	if (enemy_cir2.m_PosY <= 130)
 	{
-			up = false;
+		up = false;
 	}
-	else if (Enemy2_Pos.Y >= 350)
+	else if (enemy_cir2.m_PosY >= 350)
 	{
-			up = true;
+		up = true;
 	}
 	if (up == true)
 	{
-		Enemy2_Pos.Y -= 2.0f;
+		enemy_cir2.m_PosY -= 2.0f;
 	}
 	else
 	{
-		Enemy2_Pos.Y += 2.0f;
+		enemy_cir2.m_PosY += 2.0f;
 	}
 	
-	Engine::DrawTexture(Player_Pos.X, Player_Pos.Y, "RMAKE1", 500, -90.0f, 0.5f, 0.5f);
-
 	//プレイヤーと衝突時の敵の描画
 	if (OnCollisionCircle(player_cir, enemy_cir1) == true)
 	{
-		Engine::DrawTexture(Enemy1_Pos.X, Enemy1_Pos.Y, "Enemy1", 0, -90.0f, 0.5f, 0.5f);
+		//Engine::DrawTexture(Enemy1_Pos.X, Enemy1_Pos.Y, "Enemy1", 0, -90.0f, 0.5f, 0.5f);
 		Spawn1 = false;
 	}
 	if (OnCollisionCircle(player_cir, enemy_cir2) == true)
@@ -269,8 +265,40 @@ void DrawProcessing()
 	{
 		Spawn3 = false;
 	}
+}
+
+void DrawProcessing()
+{
+	// 描画開始
+	// 描画処理を実行する場合、必ず最初実行する
+	Engine::StartDrawing(0);
+
+	
+
+	// テクスチャ描画
+	// キーワードで指定されたテクスチャを描画する
+	// DrawTextureはテクスチャをそのまま描画する
+	// 一部切り取って描画する場合はDrawTextureUVを使用する
+	Engine::SetPivotType(PivotType::LeftTop);
+
+	Engine::DrawTexture(BackGround_1, 0.0f, "Haikei", 255, 0.0f, 1.5f, 1.5f);
+	Engine::DrawTexture(BackGround_2, 0.0f, "Haikei", 255, 0.0f, 1.5f, 1.5f);
+
+	if (Spawn1)
+	{
+		Engine::DrawTexture(enemy_cir1.m_PosX, enemy_cir1.m_PosY, "Enemy1", 255, -90.0f, 0.5f, 0.5f);
+	}
+	if (Spawn2)
+	{
+		Engine::DrawTexture(enemy_cir2.m_PosX, enemy_cir2.m_PosY, "Enemy1", 255, -90.0f, 0.5f, 0.5f);
+	}
+	if (Spawn3)
+	{
+		Engine::DrawTexture(enemy_cir3.m_PosX, enemy_cir3.m_PosY, "Enemy1", 255, -90.0f, 0.5f, 0.5f);
+	}
 
 
+	Engine::DrawTexture(player_cir.m_PosX, player_cir.m_PosY, "RMAKE1", 255, -90.0f, 0.5f, 0.5f);
 
 	//背景のスクロール
 	BackGround_1 -= 0.5f;
@@ -294,7 +322,7 @@ bool OnCollisionCircle(Circle circle1, Circle circle2)
 	float b = circle1.m_PosY - circle2.m_PosY;
 	tmp = a * a;
 	tmp += b * b;
-	float c = sqrt(tmp);
+	float c = (float)sqrt(tmp);
 	float sum_radius = circle1.m_Radius + circle2.m_Radius;
 
 	if (c <= sum_radius)
