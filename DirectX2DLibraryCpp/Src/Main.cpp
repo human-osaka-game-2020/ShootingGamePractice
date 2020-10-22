@@ -6,13 +6,15 @@
 #include "Common/Vec.h"
 #include <time.h>
 
+int FlameCount = 0;				// フレームカウント
+
 const int HpMAX = 3;			// プレイヤーの最大HP
 bool PlayerHp[HpMAX];			// プレイヤーの残Hp
 float g_Player_x = 50.0f;		// プレイヤーのx座標
 float g_Player_y = 215.0f;		// プレイヤーのy座標
 float PlayerHp_x[HpMAX];		// HpUIのx座標
 float PlayerHp_y = 0.0f;		// HpUIのy座標
-int FlameCount = 20;			// 敵との衝突判定時のFlameCount初期化
+int ContactEnemyFlame = 20;		// 敵との衝突からのフレームカウント
 
 const int EnemyStock = 10;		// 敵の出現可能数
 bool EnemySpawn[EnemyStock];	// 敵が出現しているか判断
@@ -33,13 +35,16 @@ float BackGround_y[BackGroundStock] = { 0.0f,0.0f };
 class Enemy						
 {
 public:
-	float Enemy_x;		// 敵のx座標
-	float Enemy_y;		// 敵のy座標
+	float Enemy_x;			// 敵のx座標
+	float Enemy_y;			// 敵のy座標		
 	float Enemy_y_Save;		// 敵の出現したy座標
-	float Center_x;		// 中心座標x
-	float Center_y;		// 中心座標y
-	float Angle;		// 角度
-	float Length;		// 半径の長さ
+	float Center_x;			// 中心座標x
+	float Center_y;			// 中心座標y
+	float Angle;			// 角度
+	float Length;			// 半径の長さ
+	float DeleteCount;		// 敵を倒してからのフレーム数
+	float Enemy_x_Delete;	// 敵の消滅したx座標
+	float Enemy_y_Delete;	// 敵の消滅したy座標
 };
 Enemy EA[EnemyStock];		// EnemyをEnemyStock個分複製
 
@@ -83,6 +88,7 @@ void BackGroundMove();
 void BackGroundDraw();
 void EnemyKnockDownUI();
 void ResultDraw();
+void MaterialLoadong();
 
 /*
 	エントリポイント
@@ -95,26 +101,13 @@ int WINAPI WinMain(
 {
 	// エンジンの初期化
 	// ゲームループ開始前に1度だけ実行する
-	if (Engine::Initialize(640, 480, "Sample") == false)
+	if (Engine::Initialize(640, 480, "SHOOTINGAME") == false)
 	{
 		return 0;
 	}
 
-	// 画像読み込み
-	Engine::LoadTexture("Player", "Res/Player.png");
-	Engine::LoadTexture("Enemy1", "Res/Enemy1.png");
-	Engine::LoadTexture("Bullet1", "Res/Bullet1.png");
-	Engine::LoadTexture("BackGround", "Res/background.jpg");
-	Engine::LoadTexture("Heart", "Res/Heart.png");
-	Engine::LoadTexture("Result", "Res/result.jpg");
-	Engine::LoadSoundFile("OP", "Res/bgm_maoudamashii_neorock82.wav");
-	Engine::LoadSoundFile("BGM1", "Res/game_maoudamashii_1_battle34.wav");
-	Engine::LoadSoundFile("BGM2", "Res/song_shiho_shining_star.wav");
-	Engine::LoadSoundFile("BGM3", "Res/bgm_maoudamashii_acoustic52.wav");
-	Engine::LoadSoundFile("SE1", "Res/se_maoudamashii_battle14.wav");
-	Engine::LoadSoundFile("SE2", "Res/se_maoudamashii_battle06.wav");
-	Engine::LoadSoundFile("SE3", "Res/se_maoudamashii_battle18.wav");
-
+	// 素材読み込み
+	MaterialLoadong();
 	srand((unsigned)time(NULL));			
 
 	while (true)
@@ -174,12 +167,17 @@ void GameProcessing()
 		break;
 
 	case battle:
+		FlameCount++;
+		if (FlameCount == 40)
+		{
+			FlameCount = 0;
+		}
 		PlayerMove();		
 		EnemyMove();
 		EnemyDelete();
 		BulletMove();
-		BackGroundMove();
-		FlameCount++;
+		BackGroundMove();		
+		ContactEnemyFlame++;
 		if (PlayerHp[0] == false)
 		{
 			Phase = result;
@@ -266,7 +264,7 @@ void Init()
 {
 	g_Player_x = 50.0f;
 	g_Player_y = 215.0f;
-	FlameCount = 20;
+	ContactEnemyFlame = 20;
 	EnemyKnockDownCount = 0;
 	for (int i = HpMAX - 1; i >= 0; i--)
 	{
@@ -323,7 +321,22 @@ void PlayerDraw()
 {
 	if (PlayerHp[0] == true)
 	{
-		Engine::DrawTexture(g_Player_x, g_Player_y, "Player", 255, 0.0f, 1.2f, 1.2f);
+		if (FlameCount < 10)
+		{
+			Engine::DrawTexture(g_Player_x, g_Player_y, "Player1", 255, 0.0f, 1.2f, 1.2f);
+		}
+		else if (FlameCount < 20)
+		{
+			Engine::DrawTexture(g_Player_x, g_Player_y, "Player2", 255, 0.0f, 1.2f, 1.2f);
+		}
+		else if (FlameCount < 30)
+		{
+			Engine::DrawTexture(g_Player_x, g_Player_y, "Player3", 255, 0.0f, 1.2f, 1.2f);
+		}
+		else if (FlameCount < 40)
+		{
+			Engine::DrawTexture(g_Player_x, g_Player_y, "Player4", 255, 0.0f, 1.2f, 1.2f);
+		}
 	}
 }
 
@@ -346,7 +359,7 @@ void EnemyMove()
 	for (int EnemyNum = 0; EnemyNum < EnemyStock; EnemyNum++)
 	{
 		EnemyElapsedTime = timeGetTime() - EnemySpawnTime;
-		if (EnemySpawn[EnemyNum] == false && EnemyElapsedTime >= 1200)
+		if (EnemySpawn[EnemyNum] == false && EnemyElapsedTime >= 1200 && EA[EnemyNum].DeleteCount == 0)
 		{
 			EnemySpawn[EnemyNum] = true;
 			EA[EnemyNum].Enemy_x = 640.0f;
@@ -434,7 +447,74 @@ void EnemyDraw()
 	{
 		if (EnemySpawn[EnemyNum] == true)
 		{
-			Engine::DrawTexture(EA[EnemyNum].Enemy_x, EA[EnemyNum].Enemy_y, "Enemy1",255,0.0f,1.2f,1.2f);
+			if (FlameCount < 10)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x, EA[EnemyNum].Enemy_y, "Enemy1", 255, 0.0f, 1.2f, 1.2f);
+			}
+			else if (FlameCount < 20)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x, EA[EnemyNum].Enemy_y, "Enemy2", 255, 0.0f, 1.2f, 1.2f);
+			}
+			else if (FlameCount < 30)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x, EA[EnemyNum].Enemy_y, "Enemy3", 255, 0.0f, 1.2f, 1.2f);
+			}
+			else if (FlameCount < 40)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x, EA[EnemyNum].Enemy_y, "Enemy4", 255, 0.0f, 1.2f, 1.2f);
+			}						
+		}
+		else if (EA[EnemyNum].DeleteCount > 0)
+		{
+			EA[EnemyNum].DeleteCount++;
+			if (EA[EnemyNum].DeleteCount < 5)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x_Delete, EA[EnemyNum].Enemy_y_Delete, "explosion1");
+			}
+			else if (EA[EnemyNum].DeleteCount < 10)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x_Delete, EA[EnemyNum].Enemy_y_Delete, "explosion2");
+			}
+			else if (EA[EnemyNum].DeleteCount < 15)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x_Delete, EA[EnemyNum].Enemy_y_Delete, "explosion3");
+			}
+			else if (EA[EnemyNum].DeleteCount < 20)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x_Delete, EA[EnemyNum].Enemy_y_Delete, "explosion4");
+			}
+			else if (EA[EnemyNum].DeleteCount < 25)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x_Delete, EA[EnemyNum].Enemy_y_Delete, "explosion5");
+			}
+			else if (EA[EnemyNum].DeleteCount < 30)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x_Delete, EA[EnemyNum].Enemy_y_Delete, "explosion6");
+			}
+			else if (EA[EnemyNum].DeleteCount < 35)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x_Delete, EA[EnemyNum].Enemy_y_Delete, "explosion7");
+			}
+			else if (EA[EnemyNum].DeleteCount < 40)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x_Delete, EA[EnemyNum].Enemy_y_Delete, "explosion8");
+			}
+			else if (EA[EnemyNum].DeleteCount < 45)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x_Delete, EA[EnemyNum].Enemy_y_Delete, "explosion9");
+			}
+			else if (EA[EnemyNum].DeleteCount < 50)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x_Delete, EA[EnemyNum].Enemy_y_Delete, "explosion10");
+			}
+			else if (EA[EnemyNum].DeleteCount < 55)
+			{
+				Engine::DrawTexture(EA[EnemyNum].Enemy_x_Delete, EA[EnemyNum].Enemy_y_Delete, "explosion11");
+			}
+			else
+			{
+				EA[EnemyNum].DeleteCount = 0;
+			}
 		}
 	}
 }
@@ -496,10 +576,10 @@ bool Contact_Player_Enemy(int num)
 	{
 		for (int i = HpMAX - 1; i >= 0; i--)
 		{
-			if (PlayerHp[i] == true && FlameCount >= 20)
+			if (PlayerHp[i] == true && ContactEnemyFlame >= 20)
 			{
 				PlayerHp[i] = false;
-				FlameCount = 0;
+				ContactEnemyFlame = 0;
 				Engine::PlayDuplicateSound("SE2");
 				break;
 			}
@@ -529,6 +609,9 @@ bool Contact_Bullet_Enemy(int num)
 		   )
 		{
 			BulletSpawn[BulletNum] = false;
+			EA[num].Enemy_x_Delete = EA[num].Enemy_x;
+			EA[num].Enemy_y_Delete = EA[num].Enemy_y - 25.0f;
+			EA[num].DeleteCount++;
 			EnemyKnockDownCount++;
 			Engine::PlayDuplicateSound("SE3");
 			return true;
@@ -600,4 +683,41 @@ void ResultDraw()
 		Engine::DrawFont(220.0f, 280.0f, "ゲームクリア！", FontSize::Large, FontColor::White);
 		Engine::DrawFont(230.0f, 320.0f, "おめでとう！", FontSize::Large, FontColor::White);
 	}
+}
+
+// 素材読み込み
+void MaterialLoadong()
+{
+	// 画像読み込み
+	Engine::LoadTexture("Player1", "Res/Player1.png");
+	Engine::LoadTexture("Player2", "Res/Player2.png");
+	Engine::LoadTexture("Player3", "Res/Player3.png");
+	Engine::LoadTexture("Player4", "Res/Player4.png");
+	Engine::LoadTexture("Enemy1", "Res/Enemy1.png");
+	Engine::LoadTexture("Enemy2", "Res/Enemy2.png");
+	Engine::LoadTexture("Enemy3", "Res/Enemy3.png");
+	Engine::LoadTexture("Enemy4", "Res/Enemy4.png");
+	Engine::LoadTexture("Bullet1", "Res/Bullet1.png");
+	Engine::LoadTexture("BackGround", "Res/background.jpg");
+	Engine::LoadTexture("Heart", "Res/Heart.png");
+	Engine::LoadTexture("Result", "Res/result.jpg");
+	Engine::LoadTexture("explosion1", "Res/explosion/explosion1.png");
+	Engine::LoadTexture("explosion2", "Res/explosion/explosion2.png");
+	Engine::LoadTexture("explosion3", "Res/explosion/explosion3.png");
+	Engine::LoadTexture("explosion4", "Res/explosion/explosion4.png");
+	Engine::LoadTexture("explosion5", "Res/explosion/explosion5.png");
+	Engine::LoadTexture("explosion6", "Res/explosion/explosion6.png");
+	Engine::LoadTexture("explosion7", "Res/explosion/explosion7.png");
+	Engine::LoadTexture("explosion8", "Res/explosion/explosion8.png");
+	Engine::LoadTexture("explosion9", "Res/explosion/explosion9.png");
+	Engine::LoadTexture("explosion10", "Res/explosion/explosion10.png");
+	Engine::LoadTexture("explosion11", "Res/explosion/explosion11.png");
+	// サウンド読み込み
+	Engine::LoadSoundFile("OP", "Res/bgm_maoudamashii_neorock82.wav");
+	Engine::LoadSoundFile("BGM1", "Res/game_maoudamashii_1_battle34.wav");
+	Engine::LoadSoundFile("BGM2", "Res/song_shiho_shining_star.wav");
+	Engine::LoadSoundFile("BGM3", "Res/bgm_maoudamashii_acoustic52.wav");
+	Engine::LoadSoundFile("SE1", "Res/se_maoudamashii_battle14.wav");
+	Engine::LoadSoundFile("SE2", "Res/se_maoudamashii_battle06.wav");
+	Engine::LoadSoundFile("SE3", "Res/se_maoudamashii_battle18.wav");
 }
