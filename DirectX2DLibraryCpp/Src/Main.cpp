@@ -11,27 +11,30 @@ void GameProcessing();
 // 描画処理
 void DrawProcessing();
 
-
-int FramCount_Enemy = 0;			//エネミーの出現の時間管理
-int FramCount_Bullet = 0;			//バレットのクールタイム管理
-float player_posx=320.0f;			//プレイヤーの初期値
+int FramCount_Enemy = 0;				//エネミーの出現の時間管理
+int FramCount_Bullet = 0;				//バレットのクールタイム管理
+float player_posx=320.0f;				//プレイヤーの初期値
 float player_posy=240.0f;
-float Enemy_posx = 640.0f;			//エネミーの初期値;
+float Enemy_posx = 640.0f;				//エネミーの初期値;
 float Enemy_posy = 240.0f;
-float bullet_posx = 0;				//バレットの初期値
+float bullet_posx = 0;					//バレットの初期値
 float bullet_posy = 0;
 float background1_x = 0;				//背景の初期値
 float background2_x = 962;
-const int Enemys = 10;				//エネミーの数
-const int Bullets = 10;				//バレットの数
+const int Enemys = 10;					//エネミーの数
+const int Bullets = 10;					//バレットの数
+const int HP_MAX = 3;				//プレイヤーのHP
+
+
 bool Enemy_Contact = false;
 bool Bullet_Contact = false;
 bool Player_Contact = false;
-bool bulletAppearance[Bullets] = {};//バレットの出現判断
+bool bulletAppearance[Bullets] = {};	//バレットの出現判断
+bool ContactEnemy = false;
 
-float Player_Radius = 20;			//プレイヤー半径
+float Player_Radius = 20;				//プレイヤー半径
 float Enemy_Radius = 10;				//エネミー半径
-float Bullet_Radius = 4.5;			//バレット半径
+float Bullet_Radius = 4.5;				//バレット半径
 
 
 class Enemy
@@ -53,6 +56,15 @@ public:
 };
 Bullet bullet[Bullets];				//バレット複製
 
+class HP
+{
+public:
+	float HP_posx;
+};
+HP hp[HP_MAX] = {};				//HPの配列管理
+int Contact_C = 0;				//Enemyとの接触回数
+bool contact_P[HP_MAX];
+
 void EnemyErase();
 void EnemyClone();
 void Playermove();
@@ -61,6 +73,8 @@ void BulletErase();
 void Enemy_Player_Contact();
 void Enemy_Bullet_Contact();
 void BackGround_move();
+void MAXHP_Appearance();
+void HP_decrease();
 
 /*
 	エントリポイント
@@ -81,9 +95,10 @@ int WINAPI WinMain(
 
 	Engine::LoadTexture("PlayerMachine", "Res/Robot.PNG");	//ロボットの画像読み込み
 	Engine::LoadTexture("Enemy", "Res/EA1.PNG");			//エネミー
-	Engine::LoadTexture("Bullet", "Res/Bullet1.PNG");		//バレット
+	Engine::LoadTexture("Bullet", "Res/Bullet2.PNG");		//バレット
 	Engine::LoadTexture("BG1", "Res/side01.jpg");			//背景
 	Engine::LoadTexture("BG2", "Res/side02.jpg");
+	Engine::LoadTexture("HP", "Res/heart.png");
 
 	srand((unsigned)time(NULL));
 
@@ -145,6 +160,10 @@ void GameProcessing()
 	Enemy_Player_Contact();
 	Enemy_Bullet_Contact();
 	BackGround_move();
+	MAXHP_Appearance();
+	HP_decrease();
+
+
 	for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++) 
 	{
 		enemy[EnemyNUM].EnemyCount++;
@@ -185,6 +204,15 @@ void DrawProcessing()
 			Engine::DrawTexture(enemy[EnemyNUM].Enemy_posx, enemy[EnemyNUM].Enemy_posy, "Enemy");
 		}
 	}
+	//HP描画
+	for (int hpNUM = 0; hpNUM < HP_MAX - Contact_C; hpNUM++)
+	{
+		if (contact_P[hpNUM]==true)
+		{
+			hp[hpNUM].HP_posx = hpNUM * 51;
+			Engine::DrawTexture(hp[hpNUM].HP_posx, 0, "HP", 255, 0.0, 0.2, 0.2);
+		}
+	}
 	
 	
 	// 描画終了
@@ -221,7 +249,7 @@ void Playermove()
 				bulletAppearance[bulletNUM] = true;
 				bullet[bulletNUM].bullet_posx = player_posx+59;
 				bullet[bulletNUM].bullet_posy = player_posy+25;
-				FramCount_Bullet = 0;
+
 			}
 		}
 	}
@@ -291,13 +319,13 @@ void Enemy_Player_Contact()
 	float Player_center_y = player_posy + 32;
 	for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++)
 	{
-		
-		
 		if ((enemy[EnemyNUM].Enemy_posx - Player_center_x) * (enemy[EnemyNUM].Enemy_posx - Player_center_x)  +
 			(enemy[EnemyNUM].Enemy_posy - Player_center_y) * (enemy[EnemyNUM].Enemy_posy - Player_center_y) <=
 			(Player_Radius + Enemy_Radius) * (Player_Radius + Enemy_Radius))
 		{
 			EnemyAppearance[EnemyNUM] = false;
+			ContactEnemy = true;
+			break;
 		}
 	}
 	
@@ -337,5 +365,26 @@ void BackGround_move()
 	if (background2_x < -962)
 	{
 		background2_x = 962;
+	}
+}
+
+void MAXHP_Appearance()//表示
+{
+	for (int i= 0; i < HP_MAX - Contact_C;i++)
+	{
+		contact_P[i] = true;
+	}	
+}
+
+void HP_decrease()//消去
+{	
+	if (ContactEnemy == true)
+	{
+		//デバッグ
+		Engine::StartDrawing(0);
+		Engine::DrawFont(320, 240, "減少", FontSize::Large, White);
+		Engine::FinishDrawing();
+		ContactEnemy = false;
+		Contact_C++;
 	}
 }
