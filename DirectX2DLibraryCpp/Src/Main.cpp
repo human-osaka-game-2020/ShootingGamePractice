@@ -159,7 +159,12 @@ void GameProcessing()
 	switch (Phase)
 	{
 	case title:
-		Init();		
+		Init();	
+		FlameCount++;
+		if (FlameCount == 60)
+		{
+			FlameCount = 0;
+		}
 		if (Engine::IsKeyboardKeyPushed(DIK_RETURN) == true)
 		{
 			Phase = battle;
@@ -204,7 +209,16 @@ void DrawProcessing()
 	{
 		BackGroundDraw();
 		Engine::DrawFont(220.0f, 140.0f, "SHOOTINGGAME", FontSize::Large, FontColor::White);
-		Engine::DrawFont(210.0f, 280.0f, "PUSH ENTER KEY", FontSize::Large, FontColor::White);
+		if (FlameCount < 30)
+		{
+			Engine::DrawFont(210.0f, 280.0f, "PUSH ENTER KEY", FontSize::Large, FontColor::White);
+		}
+		else if (FlameCount < 60)
+		{
+			Engine::DrawFont(210.0f, 280.0f, "PUSH ENTER KEY", FontSize::Large, FontColor::Black);
+		}
+		Engine::DrawFont(466.0f, 420.0f, "十字キーで移動", FontSize::Regular, FontColor::White);
+		Engine::DrawFont(443.0f, 450.0f, "スペースで弾発射", FontSize::Regular, FontColor::White);
 	}
 	else if (Phase == battle)
 	{
