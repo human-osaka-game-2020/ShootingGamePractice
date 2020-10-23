@@ -23,8 +23,10 @@ float background1_x = 0;				//背景の初期値
 float background2_x = 962;
 const int Enemys = 10;					//エネミーの数
 const int Bullets = 10;					//バレットの数
-const int HP_MAX = 3;				//プレイヤーのHP
+const int HP_MAX = 3;					//プレイヤーのHP
 
+static int No_DamageTime = 120;			//ノーダメージ時間 120
+int No_DamageCount=0;
 
 bool Enemy_Contact = false;
 bool Bullet_Contact = false;
@@ -213,7 +215,10 @@ void DrawProcessing()
 			Engine::DrawTexture(hp[hpNUM].HP_posx, 0, "HP", 255, 0.0, 0.2, 0.2);
 		}
 	}
-	
+	if (No_DamageCount == No_DamageTime)
+	{
+		Engine::DrawFont(300, 220, "true", FontSize::Large, FontColor::White);
+	}
 	
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
@@ -315,20 +320,27 @@ void BulletErase()
 //エネミーとプレイヤーの当たり判定
 void Enemy_Player_Contact()
 {
-	float Player_center_x = player_posx + 32;
-	float Player_center_y = player_posy + 32;
-	for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++)
+	if(ContactEnemy == true)
 	{
-		if ((enemy[EnemyNUM].Enemy_posx - Player_center_x) * (enemy[EnemyNUM].Enemy_posx - Player_center_x)  +
-			(enemy[EnemyNUM].Enemy_posy - Player_center_y) * (enemy[EnemyNUM].Enemy_posy - Player_center_y) <=
-			(Player_Radius + Enemy_Radius) * (Player_Radius + Enemy_Radius))
+		return;
+	}
+	else
+	{
+		float Player_center_x = player_posx + 32;
+		float Player_center_y = player_posy + 32;
+		for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++)
 		{
-			EnemyAppearance[EnemyNUM] = false;
-			ContactEnemy = true;
-			break;
+			if ((enemy[EnemyNUM].Enemy_posx - Player_center_x) * (enemy[EnemyNUM].Enemy_posx - Player_center_x) +
+				(enemy[EnemyNUM].Enemy_posy - Player_center_y) * (enemy[EnemyNUM].Enemy_posy - Player_center_y) <=
+				(Player_Radius + Enemy_Radius) * (Player_Radius + Enemy_Radius))
+			{
+				EnemyAppearance[EnemyNUM] = false;
+				ContactEnemy = true;
+				Contact_C++;
+				break;
+			}
 		}
 	}
-	
 }
 
 //バレットとエネミーの当たり判定
@@ -380,11 +392,12 @@ void HP_decrease()//消去
 {	
 	if (ContactEnemy == true)
 	{
-		//デバッグ
-		Engine::StartDrawing(0);
-		Engine::DrawFont(320, 240, "減少", FontSize::Large, White);
-		Engine::FinishDrawing();
-		ContactEnemy = false;
-		Contact_C++;
+		No_DamageCount++;
+		if (No_DamageCount == No_DamageTime)
+		{
+			No_DamageCount = 0;
+			ContactEnemy = false;
+		}
 	}
+	
 }
