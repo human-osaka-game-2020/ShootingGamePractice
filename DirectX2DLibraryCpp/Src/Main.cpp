@@ -14,7 +14,7 @@ float g_Player_x = 50.0f;		// プレイヤーのx座標
 float g_Player_y = 215.0f;		// プレイヤーのy座標
 float PlayerHp_x[HpMAX];		// HpUIのx座標
 float PlayerHp_y = 0.0f;		// HpUIのy座標
-int ContactEnemyFlame = 20;		// 敵との衝突からのフレームカウント
+int InvicibleTime = 120;		// 敵との衝突からのフレームカウント
 
 const int EnemyStock = 10;		// 敵の出現可能数
 bool EnemySpawn[EnemyStock];	// 敵が出現しているか判断
@@ -73,7 +73,8 @@ void SoundProcessing();
 
 void Init();
 void PlayerMove();
-void PlayerDraw();;
+void PlayerDraw(int alpha);
+void PlayerInvicibleDraw();
 void PlayerHpDraw();
 void EnemyMove();
 void EnemyUpDownMotion(int EnemyNum);
@@ -183,7 +184,7 @@ void GameProcessing()
 		EnemyDelete();
 		BulletMove();
 		BackGroundMove();		
-		ContactEnemyFlame++;
+		InvicibleTime++;
 		if (PlayerHp[0] == false)
 		{
 			Phase = result;
@@ -224,7 +225,14 @@ void DrawProcessing()
 	else if (Phase == battle)
 	{
 		BackGroundDraw();
-		PlayerDraw();
+		if (InvicibleTime > 120)
+		{
+			PlayerDraw(255);
+		}
+		else
+		{
+			PlayerInvicibleDraw();
+		}
 		PlayerHpDraw();
 		EnemyDraw();
 		BulletDraw();
@@ -279,7 +287,7 @@ void Init()
 {
 	g_Player_x = 50.0f;
 	g_Player_y = 215.0f;
-	ContactEnemyFlame = 20;
+	InvicibleTime = 120;
 	EnemyKnockDownCount = 0;
 	for (int i = HpMAX - 1; i >= 0; i--)
 	{
@@ -332,26 +340,75 @@ void PlayerMove()
 }
 
 // プレイヤーの描画
-void PlayerDraw()
+void PlayerDraw(int alpha)
 {
 	if (PlayerHp[0] == true)
 	{
 		if (FlameCount < 10)
 		{
-			Engine::DrawTexture(g_Player_x, g_Player_y, "Player1", 255, 0.0f, 1.2f, 1.2f);
+			Engine::DrawTexture(g_Player_x, g_Player_y, "Player1", alpha, 0.0f, 1.2f, 1.2f);
 		}
 		else if (FlameCount < 20)
 		{
-			Engine::DrawTexture(g_Player_x, g_Player_y, "Player2", 255, 0.0f, 1.2f, 1.2f);
+			Engine::DrawTexture(g_Player_x, g_Player_y, "Player2", alpha, 0.0f, 1.2f, 1.2f);
 		}
 		else if (FlameCount < 30)
 		{
-			Engine::DrawTexture(g_Player_x, g_Player_y, "Player3", 255, 0.0f, 1.2f, 1.2f);
+			Engine::DrawTexture(g_Player_x, g_Player_y, "Player3", alpha, 0.0f, 1.2f, 1.2f);
 		}
 		else if (FlameCount < 40)
 		{
-			Engine::DrawTexture(g_Player_x, g_Player_y, "Player4", 255, 0.0f, 1.2f, 1.2f);
+			Engine::DrawTexture(g_Player_x, g_Player_y, "Player4", alpha, 0.0f, 1.2f, 1.2f);
 		}
+	}
+}
+
+// プレイヤーの無敵時の描画
+void PlayerInvicibleDraw()
+{
+	if (InvicibleTime < 20)
+	{
+		PlayerDraw(75);		
+	}
+	else if (InvicibleTime < 40)
+	{
+		PlayerDraw(255);
+	}
+	else if (InvicibleTime < 60)
+	{
+		PlayerDraw(75);
+	}
+	else if (InvicibleTime < 70)
+	{
+		PlayerDraw(255);
+	}
+	else if (InvicibleTime < 80)
+	{
+		PlayerDraw(75);
+	}
+	else if (InvicibleTime < 90)
+	{
+		PlayerDraw(255);
+	}
+	else if (InvicibleTime < 100)
+	{
+		PlayerDraw(75);
+	}
+	else if (InvicibleTime < 105)
+	{
+		PlayerDraw(255);
+	}
+	else if (InvicibleTime < 110)
+	{
+		PlayerDraw(75);
+	}
+	else if (InvicibleTime < 115)
+	{
+		PlayerDraw(255);
+	}
+	else if (InvicibleTime < 120)
+	{
+		PlayerDraw(75);
 	}
 }
 
@@ -591,10 +648,10 @@ bool Contact_Player_Enemy(int num)
 	{
 		for (int i = HpMAX - 1; i >= 0; i--)
 		{
-			if (PlayerHp[i] == true && ContactEnemyFlame >= 20)
+			if (PlayerHp[i] == true && InvicibleTime >= 120)
 			{
 				PlayerHp[i] = false;
-				ContactEnemyFlame = 0;
+				InvicibleTime = 0;
 				Engine::PlayDuplicateSound("SE2");
 				break;
 			}
