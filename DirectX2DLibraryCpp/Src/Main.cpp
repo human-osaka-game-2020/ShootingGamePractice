@@ -67,6 +67,14 @@ HP hp[HP_MAX] = {};				//HPの配列管理
 int Contact_C = 0;				//Enemyとの接触回数
 bool contact_P[HP_MAX];
 
+enum phase
+{
+	taitle,
+	battle,
+	gameover,
+};
+phase Phase = gameover;
+
 void EnemyErase();
 void EnemyClone();
 void Playermove();
@@ -152,31 +160,52 @@ void GameProcessing()
 {
 	// 入力データの更新
 	Engine::Update();
-	FramCount_Enemy++;
-	FramCount_Bullet++;
-	Playermove();
-	EnemyClone();
-	EnemyErase();
-	BulletClone();
-	BulletErase();
-	Enemy_Player_Contact();
-	Enemy_Bullet_Contact();
-	BackGround_move();
-	MAXHP_Appearance();
-	HP_decrease();
 
-
-	for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++) 
+	switch (Phase)
 	{
-		enemy[EnemyNUM].EnemyCount++;
-		if (FramCount_Enemy > 40 && EnemyAppearance[EnemyNUM]==false)
+	case taitle:
+		if (Engine::IsKeyboardKeyPushed(DIK_RETURN))
 		{
-			EnemyAppearance[EnemyNUM] = true;
-			enemy[EnemyNUM].Enemy_posx = 620;
-			enemy[EnemyNUM].Enemy_posy = rand() % 350+ 55;
-			FramCount_Enemy = 0;
-			break;
+			Phase = battle;
 		}
+		break;
+	case battle:
+		
+		FramCount_Enemy++;
+		FramCount_Bullet++;
+		Playermove();
+		EnemyClone();
+		EnemyErase();
+		BulletClone();
+		BulletErase();
+		Enemy_Player_Contact();
+		Enemy_Bullet_Contact();
+		BackGround_move();
+		MAXHP_Appearance();
+		HP_decrease();
+		for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++)
+		{
+			enemy[EnemyNUM].EnemyCount++;
+			if (FramCount_Enemy > 40 && EnemyAppearance[EnemyNUM] == false)
+			{
+				EnemyAppearance[EnemyNUM] = true;
+				enemy[EnemyNUM].Enemy_posx = 620;
+				enemy[EnemyNUM].Enemy_posy = rand() % 350 + 55;
+				FramCount_Enemy = 0;
+				break;
+			}
+		}
+		if (Contact_C == HP_MAX)//HP最大分当たるとgameover
+		{
+			Phase = gameover;
+		}
+		break;
+	case gameover:
+		if (Engine::IsKeyboardKeyPushed(DIK_RETURN))
+		{
+			Phase = taitle;
+		}
+		break;
 	}	
 }
 
@@ -186,39 +215,51 @@ void DrawProcessing()
 	// 描画処理を実行する場合、必ず最初実行する
 	Engine::StartDrawing(0);
 	//背景描画
-	Engine::DrawTexture(background1_x, 0, "BG1", 255, 0.0, 0.47, 0.47);
-	Engine::DrawTexture(background2_x, 0, "BG2", 255, 0.0, 0.47, 0.47);
-	//プレイヤー描画
-	Engine::DrawTexture(player_posx, player_posy, "PlayerMachine");
-	//バレット描画
-	for (int BulletNUM=0;BulletNUM<Bullets;BulletNUM++)
+	switch (Phase)
 	{
-		if (bulletAppearance[BulletNUM] == true)
+	case taitle:
+		Engine::DrawTexture(background1_x, 0, "BG1", 255, 0.0, 0.47, 0.47);
+		Engine::DrawFont(160, 220, "シューティングゲーム", FontSize::Large, FontColor::White);
+		Engine::DrawFont(180, 380, "Enterキーを押してスタート", FontSize::Regular , FontColor::White);
+		break;
+	case battle:
+		Engine::DrawTexture(background1_x, 0, "BG1", 255, 0.0, 0.47, 0.47);
+		Engine::DrawTexture(background2_x, 0, "BG2", 255, 0.0, 0.47, 0.47);
+		//プレイヤー描画
+		Engine::DrawTexture(player_posx, player_posy, "PlayerMachine");
+		//バレット描画
+		for (int BulletNUM = 0; BulletNUM < Bullets; BulletNUM++)
 		{
-			Engine::DrawTexture(bullet[BulletNUM].bullet_posx, bullet[BulletNUM].bullet_posy, "Bullet");
+			if (bulletAppearance[BulletNUM] == true)
+			{
+				Engine::DrawTexture(bullet[BulletNUM].bullet_posx, bullet[BulletNUM].bullet_posy, "Bullet");
+			}
 		}
-	}
-	//エネミー描画
-	for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++)
-	{
-		if (EnemyAppearance[EnemyNUM] == true)
+		//エネミー描画
+		for (int EnemyNUM = 0; EnemyNUM < Enemys; EnemyNUM++)
 		{
-			Engine::DrawTexture(enemy[EnemyNUM].Enemy_posx, enemy[EnemyNUM].Enemy_posy, "Enemy");
+			if (EnemyAppearance[EnemyNUM] == true)
+			{
+				Engine::DrawTexture(enemy[EnemyNUM].Enemy_posx, enemy[EnemyNUM].Enemy_posy, "Enemy");
+			}
 		}
-	}
-	//HP描画
-	for (int hpNUM = 0; hpNUM < HP_MAX - Contact_C; hpNUM++)
-	{
-		if (contact_P[hpNUM]==true)
+		//HP描画
+		for (int hpNUM = 0; hpNUM < HP_MAX - Contact_C; hpNUM++)
 		{
-			hp[hpNUM].HP_posx = hpNUM * 51;
-			Engine::DrawTexture(hp[hpNUM].HP_posx, 0, "HP", 255, 0.0, 0.2, 0.2);
+			if (contact_P[hpNUM] == true)
+			{
+				hp[hpNUM].HP_posx = hpNUM * 51;
+				Engine::DrawTexture(hp[hpNUM].HP_posx, 0, "HP", 255, 0.0, 0.2, 0.2);
+			}
 		}
+		break;
+	case gameover:
+		Engine::DrawTexture(background1_x, 0, "BG1", 255, 0.0, 0.47, 0.47);
+		Engine::DrawFont(240, 180, "GameOver", FontSize::Large, FontColor::White);
+		Engine::DrawFont(180, 380, "Enterキーでタイトルへ戻る", FontSize::Regular, FontColor::White);
+		break;
 	}
-	if (No_DamageCount == No_DamageTime)
-	{
-		Engine::DrawFont(300, 220, "true", FontSize::Large, FontColor::White);
-	}
+	
 	
 	// 描画終了
 	// 描画処理を終了する場合、必ず最後に実行する
