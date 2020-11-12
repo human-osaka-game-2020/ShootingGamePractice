@@ -15,10 +15,6 @@ int FramCount_Enemy = 0;				//エネミーの出現の時間管理
 int FramCount_Bullet = 0;				//バレットのクールタイム管理
 float player_posx=320.0f;				//プレイヤーの初期値
 float player_posy=240.0f;
-float Enemy_posx = 640.0f;				//エネミーの初期値;
-float Enemy_posy = 240.0f;
-float bullet_posx = 0;					//バレットの初期値
-float bullet_posy = 0;
 float background1_x = 0;				//背景の初期値
 float background2_x = 962;
 const int Enemys = 10;					//エネミーの数
@@ -28,7 +24,6 @@ const int HP_MAX = 3;					//プレイヤーのHP
 static int No_DamageTime = 120;			//ノーダメージ時間 120
 int No_DamageCount=0;
 
-bool Enemy_Contact = false;
 bool Bullet_Contact = false;
 bool Player_Contact = false;
 bool bulletAppearance[Bullets] = {};	//バレットの出現判断
@@ -73,7 +68,7 @@ enum phase
 	battle,
 	gameover,
 };
-phase Phase = gameover;
+phase Phase = taitle;
 
 void EnemyErase();
 void EnemyClone();
@@ -218,8 +213,11 @@ void DrawProcessing()
 	switch (Phase)
 	{
 	case taitle:
-		Engine::DrawTexture(background1_x, 0, "BG1", 255, 0.0, 0.47, 0.47);
-		Engine::DrawFont(160, 220, "シューティングゲーム", FontSize::Large, FontColor::White);
+		Engine::DrawTexture(0, 0, "BG1", 255, 0.0, 0.47, 0.47);
+		Engine::DrawTexture(-150, 20, "PlayerMachine", 255, 0.0, 7.0, 7.0);
+		Engine::DrawTexture(500, 100, "Enemy", 255, 0.0, 4.0, 4.0);
+		Engine::DrawTexture(380, 300, "Enemy", 255, 0.0, 4.0, 4.0);
+		Engine::DrawFont(160, 200, "シューティングゲーム", FontSize::Large, FontColor::White);
 		Engine::DrawFont(180, 380, "Enterキーを押してスタート", FontSize::Regular , FontColor::White);
 		break;
 	case battle:
@@ -254,7 +252,7 @@ void DrawProcessing()
 		}
 		break;
 	case gameover:
-		Engine::DrawTexture(background1_x, 0, "BG1", 255, 0.0, 0.47, 0.47);
+		Engine::DrawTexture(0, 0, "BG1", 255, 0.0, 0.47, 0.47);
 		Engine::DrawFont(240, 180, "GameOver", FontSize::Large, FontColor::White);
 		Engine::DrawFont(180, 380, "Enterキーでタイトルへ戻る", FontSize::Regular, FontColor::White);
 		break;
@@ -290,7 +288,7 @@ void Playermove()
 	{
 		for (int bulletNUM = 0; bulletNUM < Bullets; bulletNUM++)
 		{
-			if (FramCount_Bullet >5 && bulletAppearance[bulletNUM] == false)
+			if (FramCount_Bullet >3 && bulletAppearance[bulletNUM] == false)
 			{
 				bulletAppearance[bulletNUM] = true;
 				bullet[bulletNUM].bullet_posx = player_posx+59;
@@ -399,7 +397,7 @@ void Enemy_Bullet_Contact()
 				(Enemy_Radius + Bullet_Radius) * (Enemy_Radius + Bullet_Radius) 
 					&& bulletAppearance[BulletNUM] == true 
 					&& EnemyAppearance[EnemyNUM]==true)
-			{
+			{				
 				EnemyAppearance[EnemyNUM] = false;
 				bulletAppearance[BulletNUM] = false;
 			}
